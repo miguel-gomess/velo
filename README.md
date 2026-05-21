@@ -88,6 +88,10 @@ docker compose up -d
 # postgresql://velo:velo@localhost:5432/velo
 ```
 
+## GitHub
+
+Subir el proyecto: [docs/GITHUB.md](docs/GITHUB.md)
+
 ## Despliegue en Vercel
 
 Frontend y backend en **una sola URL** (Neon para PostgreSQL): [docs/DEPLOY.md](docs/DEPLOY.md)
