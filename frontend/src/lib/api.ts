@@ -1,9 +1,20 @@
-/** Misma base que Better Auth (cookies de sesión en el mismo origen). */
-export const API_BASE =
-  (import.meta.env.VITE_AUTH_BASE_URL as string | undefined)?.replace(/\/$/, "") || "";
+/** Base del API: env en dev cruzado, o mismo origen en Vercel/producción. */
+export function getApiBase(): string {
+  const fromEnv = (import.meta.env.VITE_AUTH_BASE_URL as string | undefined)?.trim();
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin;
+  }
+  return "";
+}
+
+/** @deprecated Usa getApiBase(); se evalúa al cargar el módulo en el cliente. */
+export const API_BASE = getApiBase();
 
 export function apiUrl(path: string): string {
-  return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+  const p = path.startsWith("/") ? path : `/${path}`;
+  const base = getApiBase();
+  return base ? `${base}${p}` : p;
 }
 
 /** Ruta relativa del API para servir un fichero de incidencia (sin host). */
