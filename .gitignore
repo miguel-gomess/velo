@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.next/
+.env
+.env.local
+backend/.env
+frontend/.env
+.vercel
+*.log
+.DS_Store
+backend/uploads/
+# SPA generada para Vercel (scripts/sync-frontend-public.mjs)
+backend/public/*
+!backend/public/.gitkeep

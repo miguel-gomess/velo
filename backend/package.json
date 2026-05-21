@@ -1,0 +1,41 @@
+{
+  "name": "backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack -p 3000",
+    "dev:clean": "node scripts/dev-clean.mjs",
+    "kill:3000": "node -e \"const {execSync}=require('child_process');try{const o=execSync('netstat -ano | findstr :3000 | findstr LISTENING',{encoding:'utf8'});[...new Set(o.split(/\\r?\\n/).map(l=>l.trim().split(/\\s+/).pop()).filter(p=>/^\\d+$/.test(p)))].forEach(p=>{try{execSync('taskkill /PID '+p+' /F',{stdio:'inherit'})}catch(e){}});console.log('Puerto 3000 liberado.')}catch(e){console.log('Puerto 3000 ya estaba libre.');}\"",
+    "seed:admin": "npx tsx scripts/seed-admin.ts",
+    "db:usuarios": "node scripts/ensure-usuarios.mjs",
+    "db:incidencias": "node scripts/ensure-incidencias.mjs",
+    "db:tfg": "node scripts/ensure-tfg.mjs",
+    "db:setup": "node scripts/ensure-incidencias.mjs && npm run seed:admin",
+    "db:equipos": "node scripts/ensure-equipos.mjs",
+    "seed:demo": "npx tsx scripts/seed-demo.ts",
+    "test": "node --test scripts/*.test.mjs",
+    "db:mejoras": "node scripts/ensure-mejoras.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "better-auth": "^1.6.9",
+    "next": "16.2.5",
+    "pg": "^8.20.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.5",
+    "typescript": "^5"
+  }
+}

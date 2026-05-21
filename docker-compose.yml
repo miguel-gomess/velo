@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: velo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: velo
+      POSTGRES_PASSWORD: velo
+      POSTGRES_DB: velo
+    ports:
+      - "5432:5432"
+    volumes:
+      - velo_pg_data:/var/lib/postgresql/data
+
+volumes:
+  velo_pg_data:
