@@ -16,8 +16,9 @@ Sube el proyecto a un repo de GitHub (si aún no está).
 ## 3. Proyecto en Vercel
 
 1. [vercel.com](https://vercel.com) → **Add New** → **Project** → importa el repo.
-2. **Root Directory:** déjalo en **`backend`** (lo define `vercel.json` con `rootDirectory`).
-3. El `vercel.json` en la raíz del repo orquesta el build del frontend + Next.
+2. **Settings → General → Root Directory:** escribe **`backend`** y guarda (obligatorio).
+3. **Settings → Build and Deployment:** deja **Install** y **Build** en *Default* (sin override manual). Usa `backend/vercel.json`.
+4. El deploy debe usar el último commit de `main` (no «Redeploy» de un build viejo con commit `753c9bf`).
 
 ## 4. Variables de entorno
 
