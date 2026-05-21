@@ -16,8 +16,8 @@ Sube el proyecto a un repo de GitHub (si aún no está).
 ## 3. Proyecto en Vercel
 
 1. [vercel.com](https://vercel.com) → **Add New** → **Project** → importa el repo.
-2. **Root Directory:** deja la raíz del repo (`.`). No uses solo `backend/`.
-3. Vercel detectará `vercel.json` y el framework Next.js en `backend/`.
+2. **Root Directory:** déjalo en **`backend`** (lo define `vercel.json` con `rootDirectory`).
+3. El `vercel.json` en la raíz del repo orquesta el build del frontend + Next.
 
 ## 4. Variables de entorno
 

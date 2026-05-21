@@ -2,6 +2,9 @@
   "name": "backend",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev --webpack -p 3000",
     "dev:clean": "node scripts/dev-clean.mjs",
