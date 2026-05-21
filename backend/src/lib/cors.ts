@@ -39,6 +39,9 @@ function buildAllowed(): Set<string> {
   const vercelOrigin = originFromEnvUrl(process.env.VERCEL_URL);
   if (vercelOrigin) set.add(vercelOrigin);
 
+  const prodOrigin = originFromEnvUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL);
+  if (prodOrigin) set.add(prodOrigin);
+
   return set;
 }
 
