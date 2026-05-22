@@ -129,8 +129,10 @@ body {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
 }
 
-/* Modales: pantalla completa en móvil */
+/* Modales: pantalla completa en móvil, centrados en desktop */
 .velo-modal-shell {
+  display: flex;
+  justify-content: center;
   align-items: flex-end;
   padding: 0;
 }
@@ -154,7 +156,10 @@ body {
   .velo-modal-dialog {
     max-height: min(92vh, 960px);
     height: auto;
-    max-width: 72rem;
+    width: 100%;
+    max-width: min(72rem, calc(100vw - 3rem));
+    margin-left: auto;
+    margin-right: auto;
     border-radius: 0.75rem;
   }
 }

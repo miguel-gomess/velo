@@ -452,7 +452,7 @@ export function IncidenciaDetalleModal({
   }
 
   return (
-    <div className="velo-modal-shell fixed inset-0 z-50 flex sm:p-6">
+    <div className="velo-modal-shell fixed inset-0 z-50 justify-center sm:p-6">
       <button
         type="button"
         className="absolute inset-0 bg-[#091e42]/50 backdrop-blur-[2px]"
