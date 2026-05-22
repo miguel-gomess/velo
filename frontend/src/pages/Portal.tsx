@@ -52,8 +52,9 @@ export function Portal() {
   );
 
   const stats = useMemo(() => contarPorEstado(misSolicitudes), [misSolicitudes]);
+  const esAdmin = me ? isAdminUsuario(me) : false;
   const { total: notifTotal, por_incidencia: sinLeerPorIncidencia, refrescar: refrescarNotif } =
-    useNotificaciones();
+    useNotificaciones(15_000, !esAdmin);
 
   useEffect(() => {
     if (!me) return;
@@ -119,7 +120,7 @@ export function Portal() {
       id: "seguimiento" as const,
       label: "Mis solicitudes",
       icon: MessageSquare,
-      badge: notifTotal > 0 ? notifTotal : stats.total || undefined,
+      badge: !esAdmin && notifTotal > 0 ? notifTotal : stats.total || undefined,
     },
   ];
 
@@ -133,7 +134,7 @@ export function Portal() {
         onIrAIncidencia={irAIncidencia}
       />
 
-      <div className="flex min-h-0 w-full flex-1 flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:gap-4 lg:px-6 lg:py-3">
+      <div className="flex min-h-0 w-full flex-1 flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-stretch lg:gap-4 lg:px-6 lg:py-3">
         <PortalNavSidebar
           items={navItems}
           tab={tab}

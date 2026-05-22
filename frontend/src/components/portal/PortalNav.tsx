@@ -1,4 +1,6 @@
 import type { LucideIcon } from "lucide-react";
+import { Clock } from "lucide-react";
+import { SLA_PRIORIDADES, formatoPlazoSla } from "../../lib/sla";
 import type { PortalTabId } from "./portalUtils";
 
 export type PortalNavItem = {
@@ -17,7 +19,7 @@ type Props = {
 
 export function PortalNavSidebar({ items, tab, onTab, stats }: Props) {
   return (
-    <aside className="portal-animate-in hidden w-52 shrink-0 lg:flex lg:flex-col lg:min-h-0">
+    <aside className="portal-animate-in hidden w-52 shrink-0 lg:flex lg:flex-col lg:self-stretch">
       <nav className="portal-card shrink-0 space-y-0.5 p-1.5">
         {items.map((item) => (
           <PortalNavButton key={item.id} item={item} active={tab === item.id} onClick={() => onTab(item.id)} />
@@ -46,13 +48,28 @@ export function PortalNavSidebar({ items, tab, onTab, stats }: Props) {
         </div>
       )}
 
-      <div className="portal-card mt-2 shrink-0 p-3 lg:mt-auto">
-        <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--velo-text-subtle)]">
-          Plazo SLA
+      <div className="portal-card mt-2 flex min-h-0 flex-1 flex-col p-3 lg:mt-3">
+        <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-[var(--velo-text-subtle)]">
+          <Clock size={12} className="text-[var(--velo-brand)]" />
+          Plazos SLA
         </p>
         <p className="mt-1.5 text-[10px] leading-snug text-[var(--velo-text-muted)]">
-          La <strong className="font-semibold text-[var(--velo-text)]">fecha límite</strong> depende de la
-          prioridad. «Fuera de plazo» = objetivo superado.
+          La <strong className="font-semibold text-[var(--velo-text)]">fecha límite</strong> se calcula al
+          crear la solicitud según la prioridad.
+        </p>
+        <ul className="mt-2.5 space-y-1.5 border-t border-[var(--velo-border)] pt-2.5">
+          {SLA_PRIORIDADES.map((s) => (
+            <li key={s.clave} className="flex items-center justify-between gap-2 text-[10px]">
+              <span className="text-[var(--velo-text-muted)]">{s.etiqueta}</span>
+              <span className="shrink-0 font-bold tabular-nums text-[var(--velo-brand)]">
+                {formatoPlazoSla(s.horas)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-auto pt-2.5 text-[9px] leading-snug text-[var(--velo-text-subtle)]">
+          <span className="font-semibold text-amber-800">Plazo próximo</span>: menos de 24 h.{" "}
+          <span className="font-semibold text-rose-800">Fuera de plazo</span>: fecha límite superada.
         </p>
       </div>
     </aside>

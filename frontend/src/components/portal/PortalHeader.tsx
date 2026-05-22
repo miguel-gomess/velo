@@ -62,7 +62,10 @@ export function PortalHeader({
               <span className="hidden sm:inline">Tablero</span>
             </Link>
           )}
-          <NotificacionesCampana onIrAIncidencia={onIrAIncidencia} />
+          <NotificacionesCampana
+            onIrAIncidencia={onIrAIncidencia}
+            activo={!isAdminUsuario(me)}
+          />
           <div className="hidden items-center gap-2 rounded-xl border border-[var(--velo-border)] bg-white/80 px-2 py-1.5 sm:flex">
             <UserAvatar nombre={sessionName ?? me.nombre} userId={me.id} size="sm" />
             <div className="pr-1">

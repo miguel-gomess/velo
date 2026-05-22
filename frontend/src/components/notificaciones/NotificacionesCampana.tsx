@@ -7,6 +7,8 @@ import type { NotificacionItem } from "../../lib/api";
 
 type Props = {
   onIrAIncidencia: (incidenciaId: number) => void;
+  /** false para admin: sin campana ni polling */
+  activo?: boolean;
 };
 
 function estiloTipo(tipo: NotificacionItem["tipo"]) {
@@ -35,9 +37,9 @@ function tiempoRelativo(iso: string | null, ahora: number): string | null {
   return formatFechaRelativa(iso, ahora);
 }
 
-export function NotificacionesCampana({ onIrAIncidencia }: Props) {
+export function NotificacionesCampana({ onIrAIncidencia, activo = true }: Props) {
   const ahora = useAhoraReloj();
-  const { total, items, refrescar } = useNotificaciones();
+  const { total, items, refrescar } = useNotificaciones(15_000, activo);
   const [abierto, setAbierto] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -58,6 +60,8 @@ export function NotificacionesCampana({ onIrAIncidencia }: Props) {
   }
 
   const hayPendientes = total > 0;
+
+  if (!activo) return null;
 
   return (
     <div className="relative" ref={panelRef}>

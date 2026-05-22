@@ -8,6 +8,7 @@ import { Columns3, List } from "lucide-react";
 type Props = {
   items: Incidencia[];
   me: Usuario;
+  esAdmin?: boolean;
   loading?: boolean;
   readOnly?: boolean;
   sinLeerPorIncidencia?: Record<number, number>;
@@ -23,6 +24,7 @@ const TABS = [
 export function KanbanVistaTabs({
   items,
   me,
+  esAdmin = false,
   loading,
   readOnly,
   sinLeerPorIncidencia,
@@ -76,6 +78,7 @@ export function KanbanVistaTabs({
             <KanbanBoard
               items={items}
               me={me}
+              esAdmin={esAdmin}
               loading={loading}
               readOnly={readOnly}
               sinLeerPorIncidencia={sinLeerPorIncidencia}

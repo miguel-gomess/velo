@@ -8,10 +8,14 @@ const VACIO: NotificacionesResumen = {
   items: [],
 };
 
-export function useNotificaciones(pollMs = 15_000) {
+export function useNotificaciones(pollMs = 15_000, activo = true) {
   const [data, setData] = useState<NotificacionesResumen>(VACIO);
 
   const refrescar = useCallback(async () => {
+    if (!activo) {
+      setData(VACIO);
+      return;
+    }
     try {
       const r = await apiGetNotificacionesResumen();
       setData({
@@ -22,13 +26,13 @@ export function useNotificaciones(pollMs = 15_000) {
     } catch {
       /* silencioso: el siguiente tick reintentará */
     }
-  }, []);
+  }, [activo]);
 
   useEffect(() => {
     void refrescar();
   }, [refrescar]);
 
-  useVisibilityPolling(refrescar, pollMs);
+  useVisibilityPolling(refrescar, pollMs, { enabled: activo });
 
   return { ...data, refrescar };
 }

@@ -16,6 +16,7 @@ export function WorkspaceKanbanPanel() {
       scope="kanban"
       me={me}
       title="Tablero de tu equipo"
+      description="Incidencias de tu equipo y las solicitudes que has creado."
       esAdmin={false}
       puedeGestionarEstado
       puedeGestionarAsignacion={false}

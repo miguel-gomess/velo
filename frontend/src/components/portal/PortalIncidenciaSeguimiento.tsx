@@ -17,7 +17,13 @@ import { DescripcionVistaJira } from "../incidencias/TextoConImagenes";
 import { ActividadHistorialTabs } from "../incidencias/ActividadHistorialTabs";
 import { UserAvatar } from "../UserAvatar";
 import { labelEquipo } from "../../lib/equipos";
-import { labelSlaEstado, slaEstado } from "./portalUtils";
+import {
+  formatFechaLimiteSla,
+  labelSlaEstado,
+  mensajeAlertaSla,
+  slaEstado,
+  textoVenceSla,
+} from "./portalUtils";
 import {
   AlertCircle,
   ArrowLeft,
@@ -36,16 +42,6 @@ type Props = {
   me: Usuario;
   onBack?: () => void;
 };
-
-function formatFecha(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-ES", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export function PortalIncidenciaSeguimiento({
   incidenciaId,
@@ -99,6 +95,7 @@ export function PortalIncidenciaSeguimiento({
   const estadoColor = colorEstado(detalle.estado);
   const sla = slaEstado(detalle.fecha_limite, detalle.estado);
   const slaLabel = labelSlaEstado(sla);
+  const alertaSla = mensajeAlertaSla(sla);
   const cerrada = estadoNorm === "cerrada";
   const puedeComentar =
     (detalle.usuario_id === usuarioActualId || detalle.asignado_a === usuarioActualId) &&
@@ -187,25 +184,27 @@ export function PortalIncidenciaSeguimiento({
             )}
             <span className="inline-flex items-center gap-1 rounded-lg bg-white/80 px-2.5 py-1 text-[10px] text-[var(--velo-text-subtle)]">
               <Calendar size={12} />
-              {formatFecha(detalle.fecha_creacion)}
+              Creada {formatFechaLimiteSla(detalle.fecha_creacion)}
             </span>
             {detalle.fecha_limite && !cerrada && (
               <span
-                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10px] font-bold ${
+                className={`inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-lg px-2.5 py-1 text-[10px] font-bold ${
                   sla === "overdue"
                     ? "bg-rose-100 text-rose-800"
                     : sla === "warning"
                       ? "bg-amber-100 text-amber-900"
                       : "bg-emerald-50 text-emerald-800"
                 }`}
+                title={`Límite: ${formatFechaLimiteSla(detalle.fecha_limite)}`}
               >
-                <CalendarClock size={12} />
-                {slaLabel ?? "En plazo"} · {formatFecha(detalle.fecha_limite)}
+                <CalendarClock size={12} className="shrink-0" />
+                <span>{slaLabel ?? "En plazo"}</span>
+                <span className="font-medium opacity-90">· {textoVenceSla(detalle.fecha_limite)}</span>
               </span>
             )}
           </div>
 
-          {slaLabel && !cerrada && (
+          {alertaSla && (
             <p
               className={`mt-4 rounded-xl border px-4 py-3 text-xs leading-relaxed ${
                 sla === "overdue"
@@ -213,9 +212,7 @@ export function PortalIncidenciaSeguimiento({
                   : "border-amber-200 bg-amber-50 text-amber-950"
               }`}
             >
-              {sla === "overdue"
-                ? "Esta solicitud ha superado el plazo objetivo de respuesta. El equipo sigue trabajando en ella; puedes escribir en el chat si necesitas más información."
-                : "El plazo de respuesta vence pronto. Si es urgente, añade un comentario en la actividad."}
+              {alertaSla}
             </p>
           )}
 
@@ -231,7 +228,7 @@ export function PortalIncidenciaSeguimiento({
               {detalle.motivo_cierre && (
                 <p className="mt-1 text-xs text-emerald-800/90">
                   Motivo: {detalle.motivo_cierre}
-                  {detalle.fecha_cierre && ` · ${formatFecha(detalle.fecha_cierre)}`}
+                  {detalle.fecha_cierre && ` · ${formatFechaLimiteSla(detalle.fecha_cierre)}`}
                 </p>
               )}
             </div>

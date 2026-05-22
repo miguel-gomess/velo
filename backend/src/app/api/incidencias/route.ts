@@ -104,6 +104,7 @@ export async function GET(request: Request) {
           a.nombre AS asignado_nombre
         ${JOIN_SOLICITANTE}
         WHERE i.asignado_a = $1
+           OR i.usuario_id = $1
            OR i.equipo_codigo = ANY($2::varchar[])
         ORDER BY i.id DESC
       `,

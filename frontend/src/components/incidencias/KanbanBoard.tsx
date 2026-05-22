@@ -19,6 +19,7 @@ import {
   prioridadTone,
   type EstadoKanban,
 } from "../../lib/incidencias";
+import { puedeMoverIncidenciaEnTablero } from "../../lib/equipos";
 import {
   GripVertical,
   Image as ImageIcon,
@@ -28,6 +29,7 @@ import {
 type Props = {
   items: Incidencia[];
   me: Usuario;
+  esAdmin?: boolean;
   loading?: boolean;
   readOnly?: boolean;
   sinLeerPorIncidencia?: Record<number, number>;
@@ -280,6 +282,7 @@ type KanbanColumnProps = {
   colId: EstadoKanban;
   items: Incidencia[];
   me: Usuario;
+  esAdmin: boolean;
   onOpen: (inc: Incidencia) => void;
   activeId: string | null;
   readOnly?: boolean;
@@ -290,6 +293,7 @@ function KanbanColumnImpl({
   colId,
   items,
   me,
+  esAdmin,
   onOpen,
   activeId,
   readOnly,
@@ -346,18 +350,22 @@ function KanbanColumnImpl({
             </p>
           </div>
         ) : (
-          items.map((inc) => (
-            <KanbanCard
-              key={inc.id}
-              inc={inc}
-              me={me}
-              columnColor={theme.color}
-              onOpen={onOpen}
-              isDragging={activeId === `inc-${inc.id}`}
-              readOnly={readOnly}
-              mensajesSinLeer={sinLeerPorIncidencia[inc.id] ?? 0}
-            />
-          ))
+          items.map((inc) => {
+            const cardReadOnly =
+              readOnly || !puedeMoverIncidenciaEnTablero(inc, me, esAdmin);
+            return (
+              <KanbanCard
+                key={inc.id}
+                inc={inc}
+                me={me}
+                columnColor={theme.color}
+                onOpen={onOpen}
+                isDragging={activeId === `inc-${inc.id}`}
+                readOnly={cardReadOnly}
+                mensajesSinLeer={sinLeerPorIncidencia[inc.id] ?? 0}
+              />
+            );
+          })
         )}
       </div>
     </section>
@@ -392,6 +400,7 @@ function KanbanSkeleton() {
 export function KanbanBoard({
   items,
   me,
+  esAdmin = false,
   loading,
   readOnly,
   sinLeerPorIncidencia = {},
@@ -448,14 +457,14 @@ export function KanbanBoard({
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={(e) => {
-          if (readOnly) return;
           const inc = e.active.data.current?.inc as Incidencia | undefined;
-          if (inc) setActiveInc(inc);
+          if (!inc || readOnly || !puedeMoverIncidenciaEnTablero(inc, me, esAdmin)) return;
+          setActiveInc(inc);
         }}
         onDragEnd={(e) => {
           setActiveInc(null);
-          if (readOnly) return;
           const inc = e.active.data.current?.inc as Incidencia | undefined;
+          if (!inc || readOnly || !puedeMoverIncidenciaEnTablero(inc, me, esAdmin)) return;
           const overId = e.over?.id;
           if (
             inc &&
@@ -474,6 +483,7 @@ export function KanbanBoard({
               colId={col.id}
               items={porColumna[col.id]}
               me={me}
+              esAdmin={esAdmin}
               onOpen={onOpen}
               activeId={activeInc ? `inc-${activeInc.id}` : null}
               readOnly={readOnly}

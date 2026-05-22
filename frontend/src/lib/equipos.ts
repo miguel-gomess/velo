@@ -44,6 +44,21 @@ const EQUIPO_ACCENT: Record<string, { bg: string; text: string; ring: string }> 
   LEGAL: { bg: "bg-indigo-50", text: "text-indigo-800", ring: "ring-indigo-200" },
 };
 
+/** Puede arrastrar / cambiar estado en tablero (agente del equipo o asignado). */
+export function puedeMoverIncidenciaEnTablero(
+  inc: { asignado_a: number | null; equipo_codigo?: string | null },
+  me: { id: number; equipos?: string[] },
+  esAdmin: boolean,
+): boolean {
+  if (esAdmin) return true;
+  if (inc.asignado_a === me.id) return true;
+  const cod = normalizeEquipoCodigo(inc.equipo_codigo);
+  const equipos = (me.equipos ?? [])
+    .map((e) => normalizeEquipoCodigo(e))
+    .filter((c): c is string => !!c);
+  return !!(cod && equipos.includes(cod));
+}
+
 export function equipoAccentClass(codigo: string): { bg: string; text: string; ring: string } {
   return (
     EQUIPO_ACCENT[codigo] ?? {

@@ -1,4 +1,10 @@
 import type { Incidencia } from "../../lib/api";
+import {
+  formatFechaRelativa,
+  formatFechaLimiteSla,
+  parseFechaApi,
+  textoVenceSla,
+} from "../../lib/fechas";
 import { colorEstado, labelEstado, normalizarEstado } from "../../lib/incidencias";
 
 export type PortalTabId = "inicio" | "nueva" | "seguimiento";
@@ -33,7 +39,7 @@ export function prioridadTone(prioridad: string): string {
   return "border-slate-200 bg-slate-50 text-slate-700";
 }
 
-export { formatFechaRelativa } from "../../lib/fechas";
+export { formatFechaRelativa, formatFechaLimiteSla, textoVenceSla };
 
 export function slaEstado(
   fechaLimite: string | null | undefined,
@@ -42,12 +48,23 @@ export function slaEstado(
   if (!fechaLimite) return "none";
   const norm = normalizarEstado(estado);
   if (norm === "cerrada") return "none";
-  const limite = new Date(fechaLimite).getTime();
+  const limite = parseFechaApi(fechaLimite).getTime();
+  if (Number.isNaN(limite)) return "none";
   const now = Date.now();
   if (limite < now) return "overdue";
-  const horas = (limite - now) / 3600000;
+  const horas = (limite - now) / 3_600_000;
   if (horas <= 24) return "warning";
   return "ok";
+}
+
+export function mensajeAlertaSla(estado: ReturnType<typeof slaEstado>): string | null {
+  if (estado === "overdue") {
+    return "Esta solicitud ha superado el plazo objetivo de respuesta. El equipo sigue trabajando en ella; puedes escribir en el chat si necesitas más información.";
+  }
+  if (estado === "warning") {
+    return "El plazo de respuesta vence en menos de 24 horas. Si es urgente, añade un comentario en la actividad.";
+  }
+  return null;
 }
 
 export function labelSlaEstado(estado: ReturnType<typeof slaEstado>): string | null {

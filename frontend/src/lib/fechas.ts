@@ -50,6 +50,36 @@ export function formatFechaRelativa(iso: string, ahora = Date.now()): string {
   });
 }
 
+/** Fecha límite SLA legible en el portal. */
+export function formatFechaLimiteSla(iso: string): string {
+  const d = parseFechaApi(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** Texto relativo hasta el vencimiento (o desde que venció). */
+export function textoVenceSla(iso: string, ahora = Date.now()): string {
+  const limite = parseFechaApi(iso).getTime();
+  if (Number.isNaN(limite)) return "—";
+  const diffMs = limite - ahora;
+  if (diffMs < 0) {
+    const horas = Math.ceil(Math.abs(diffMs) / 3_600_000);
+    if (horas < 24) return `Venció hace ${horas} h`;
+    const dias = Math.ceil(horas / 24);
+    return dias === 1 ? "Venció hace 1 día" : `Venció hace ${dias} días`;
+  }
+  const horas = Math.ceil(diffMs / 3_600_000);
+  if (horas < 24) return horas === 1 ? "Vence en 1 h" : `Vence en ${horas} h`;
+  const dias = Math.ceil(horas / 24);
+  return dias === 1 ? "Vence en 1 día" : `Vence en ${dias} días`;
+}
+
 /** Intervalo de tick recomendado según antigüedad del timestamp. */
 export function intervaloRelojPara(iso: string): number {
   const t = parseFechaApi(iso).getTime();

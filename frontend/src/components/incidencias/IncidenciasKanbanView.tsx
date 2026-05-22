@@ -53,7 +53,10 @@ export function IncidenciasKanbanView({
   const [crearAbierto, setCrearAbierto] = useState(false);
   const [cerrarId, setCerrarId] = useState<number | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const { por_incidencia: sinLeerPorIncidencia, refrescar: refrescarNotif } = useNotificaciones();
+  const { por_incidencia: sinLeerPorIncidencia, refrescar: refrescarNotif } = useNotificaciones(
+    15_000,
+    !esAdmin,
+  );
 
   useEffect(() => {
     const raw = searchParams.get("incidencia");
@@ -174,12 +177,14 @@ export function IncidenciasKanbanView({
               <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
               Actualizar
             </button>
-            <NotificacionesCampana
-              onIrAIncidencia={(id) => {
-                setModalId(id);
-                void refrescarNotif();
-              }}
-            />
+            {!esAdmin && (
+              <NotificacionesCampana
+                onIrAIncidencia={(id) => {
+                  setModalId(id);
+                  void refrescarNotif();
+                }}
+              />
+            )}
           </div>
         }
       />
@@ -206,6 +211,7 @@ export function IncidenciasKanbanView({
       <KanbanVistaTabs
         items={filtradas}
         me={me}
+        esAdmin={esAdmin}
         loading={loading}
         sinLeerPorIncidencia={sinLeerPorIncidencia}
         onOpen={(inc) => setModalId(inc.id)}
