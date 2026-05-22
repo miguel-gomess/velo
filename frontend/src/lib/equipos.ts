@@ -33,3 +33,23 @@ export function labelEquipo(codigo: string | null | undefined): string {
   if (!codigo) return "Sin equipo";
   return EQUIPOS_CATALOGO.find((e) => e.codigo === codigo)?.nombre ?? codigo;
 }
+
+const EQUIPO_ACCENT: Record<string, { bg: string; text: string; ring: string }> = {
+  IT: { bg: "bg-sky-50", text: "text-sky-800", ring: "ring-sky-200" },
+  RRHH: { bg: "bg-violet-50", text: "text-violet-800", ring: "ring-violet-200" },
+  ADMIN: { bg: "bg-slate-100", text: "text-slate-800", ring: "ring-slate-200" },
+  MANTENIMIENTO: { bg: "bg-amber-50", text: "text-amber-900", ring: "ring-amber-200" },
+  FINANZAS: { bg: "bg-emerald-50", text: "text-emerald-800", ring: "ring-emerald-200" },
+  COMERCIAL: { bg: "bg-rose-50", text: "text-rose-800", ring: "ring-rose-200" },
+  LEGAL: { bg: "bg-indigo-50", text: "text-indigo-800", ring: "ring-indigo-200" },
+};
+
+export function equipoAccentClass(codigo: string): { bg: string; text: string; ring: string } {
+  return (
+    EQUIPO_ACCENT[codigo] ?? {
+      bg: "bg-[var(--velo-brand-muted)]",
+      text: "text-[var(--velo-brand)]",
+      ring: "ring-[var(--velo-border)]",
+    }
+  );
+}

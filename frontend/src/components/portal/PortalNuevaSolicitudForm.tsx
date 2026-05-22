@@ -237,7 +237,7 @@ export function PortalNuevaSolicitudForm({
 
 function PanelIntro({ categoria }: { categoria: PortalCategoria }) {
   return (
-    <div className="portal-card relative overflow-hidden p-8">
+    <div className="portal-card relative overflow-hidden p-5 sm:p-8">
       <div
         className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full opacity-40 blur-3xl"
         style={{ background: categoria.accentSoft }}

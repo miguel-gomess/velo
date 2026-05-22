@@ -30,7 +30,7 @@ En **Settings → Environment Variables** del proyecto, añade:
 | `DATABASE_URL` | Connection string de Neon | Obligatorio |
 | `DATABASE_SSL` | `true` | Obligatorio con Neon |
 | `BETTER_AUTH_SECRET` | Cadena aleatoria larga | `openssl rand -hex 32` |
-| `BETTER_AUTH_URL` | `https://tu-proyecto.vercel.app` | La URL final de Vercel (sin `/` final). Tras el primer deploy, actualízala si el dominio cambió. |
+| `BETTER_AUTH_URL` | **La URL exacta de la barra del navegador** (ej. `https://velo-xxx.vercel.app`) | Sin `/` final. Debe coincidir con donde abres la app (no uses un dominio que devuelva 404). |
 | `ADMIN_EMAIL` | `admin@tuempresa.com` | Para el primer admin |
 | `ADMIN_PASSWORD` | Contraseña fuerte | Solo para el seed inicial |
 

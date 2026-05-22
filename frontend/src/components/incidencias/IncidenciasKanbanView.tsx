@@ -151,7 +151,7 @@ export function IncidenciasKanbanView({
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex min-h-0 flex-col lg:min-h-[calc(100dvh-8rem)]">
       <PageHeader
         title={title}
         description={description}

@@ -25,7 +25,7 @@ export function PortalHeader({
 }: Props) {
   return (
     <header className="portal-glass sticky top-0 z-50 border-b border-white/40">
-      <div className="flex w-full items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="safe-area-pt flex w-full items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-5 lg:px-6">
         <div className="flex items-center gap-4">
           <AppLogo size="sm" />
           <div className="hidden h-8 w-px bg-[var(--velo-border)] sm:block" />
@@ -39,23 +39,27 @@ export function PortalHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {isAdminUsuario(me) && (
             <Link
               to="/dashboard/incidencias"
-              className="hidden items-center gap-1.5 rounded-xl border border-[var(--velo-border)] bg-white/80 px-3 py-2 text-xs font-semibold text-[var(--velo-text)] transition hover:border-[var(--velo-brand)] hover:text-[var(--velo-brand)] sm:flex"
+              className="flex items-center gap-1.5 rounded-xl border border-[var(--velo-border)] bg-white/80 p-2 text-xs font-semibold text-[var(--velo-text)] transition hover:border-[var(--velo-brand)] hover:text-[var(--velo-brand)] sm:px-3 sm:py-2"
+              aria-label="Panel de administración"
+              title="Admin"
             >
               <LayoutDashboard size={15} />
-              Admin
+              <span className="hidden sm:inline">Admin</span>
             </Link>
           )}
           {puedeUsarWorkspaceKanban(me) && (
             <Link
               to="/workspace"
-              className="hidden items-center gap-1.5 rounded-xl border border-[var(--velo-border)] bg-white/80 px-3 py-2 text-xs font-semibold text-[var(--velo-text)] transition hover:border-[var(--velo-brand)] hover:text-[var(--velo-brand)] sm:flex"
+              className="flex items-center gap-1.5 rounded-xl border border-[var(--velo-border)] bg-white/80 p-2 text-xs font-semibold text-[var(--velo-text)] transition hover:border-[var(--velo-brand)] hover:text-[var(--velo-brand)] sm:px-3 sm:py-2"
+              aria-label="Tablero Kanban"
+              title="Tablero"
             >
               <Columns3 size={15} />
-              Tablero
+              <span className="hidden sm:inline">Tablero</span>
             </Link>
           )}
           <NotificacionesCampana onIrAIncidencia={onIrAIncidencia} />

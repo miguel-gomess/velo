@@ -80,7 +80,7 @@ export function Portal() {
 
   if (isPending || (email && !profile.ready)) {
     return (
-      <div className="portal-shell flex min-h-screen">
+      <div className="portal-shell flex h-svh">
         <PageLoading label="Cargando portal…" />
       </div>
     );
@@ -124,7 +124,7 @@ export function Portal() {
   ];
 
   return (
-    <div className="portal-shell flex min-h-screen flex-col">
+    <div className="portal-shell flex h-svh flex-col overflow-hidden">
       <PortalHeader
         nombreUsuario={nombreUsuario}
         me={me}
@@ -133,7 +133,7 @@ export function Portal() {
         onIrAIncidencia={irAIncidencia}
       />
 
-      <div className="flex w-full flex-1 flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8 lg:flex-row lg:gap-6 xl:gap-8">
+      <div className="flex min-h-0 w-full flex-1 flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:gap-4 lg:px-6 lg:py-3">
         <PortalNavSidebar
           items={navItems}
           tab={tab}
@@ -142,7 +142,11 @@ export function Portal() {
         />
         <PortalNavMobile items={navItems} tab={tab} onTab={setTab} />
 
-        <main className="min-w-0 flex-1">
+        <main
+          className={`min-h-0 min-w-0 flex-1 overflow-y-auto ${
+            tab === "inicio" ? "lg:overflow-hidden" : ""
+          }`}
+        >
           {tab === "inicio" && (
             <PortalInicioPanel
               nombreUsuario={nombreUsuario}

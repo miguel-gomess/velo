@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Bar,
   BarChart,
@@ -15,7 +16,20 @@ import {
   YAxis,
 } from "recharts";
 import { apiGetIncidenciasStats, type IncidenciasStats } from "../../lib/api";
-import { LayoutDashboard, RefreshCw, AlertCircle, Download } from "lucide-react";
+import { PageHeader } from "../../components/layout/PageHeader";
+import {
+  AlertCircle,
+  BarChart3,
+  Building2,
+  Download,
+  Inbox,
+  Kanban,
+  RefreshCw,
+  ShieldCheck,
+  Timer,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 
 function exportarCsv(data: IncidenciasStats) {
   const lines: string[] = [
@@ -41,8 +55,7 @@ function exportarCsv(data: IncidenciasStats) {
   URL.revokeObjectURL(a.href);
 }
 
-/** Paleta suave pero distinguible */
-const PIE_COLORS = ["#6366f1", "#0d9488", "#d97706", "#e11d48", "#64748b", "#7c3aed"];
+const PIE_COLORS = ["#0052cc", "#0d9488", "#d97706", "#e11d48", "#64748b", "#7c3aed"];
 
 const BAR_FILLS = {
   Abiertas: "#818cf8",
@@ -50,6 +63,19 @@ const BAR_FILLS = {
   Cerradas: "#34d399",
   Otras: "#94a3b8",
 };
+
+const RANGOS = [
+  { id: "todo", label: "Todo", dias: null as number | null },
+  { id: "7d", label: "7 días", dias: 7 },
+  { id: "30d", label: "30 días", dias: 30 },
+  { id: "90d", label: "90 días", dias: 90 },
+] as const;
+
+function isoHaceDias(dias: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - dias);
+  return d.toISOString().slice(0, 10);
+}
 
 function labelEstado(estado: string): string {
   const e = estado.toLowerCase().replace(/_/g, " ");
@@ -72,11 +98,13 @@ function BarTooltip({
   const rows = payload.filter((p) => p.value > 0);
   if (!rows.length) return null;
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs shadow-md">
-      <p className="mb-2 border-b border-slate-100 pb-1.5 font-semibold text-slate-800">{label}</p>
+    <div className="rounded-xl border border-[var(--velo-border)] bg-white px-3 py-2.5 text-xs shadow-md">
+      <p className="mb-2 border-b border-[var(--velo-border)] pb-1.5 font-semibold text-[var(--velo-text)]">
+        {label}
+      </p>
       <ul className="space-y-1">
         {rows.map((p) => (
-          <li key={p.name} className="flex items-center justify-between gap-8 text-slate-600">
+          <li key={p.name} className="flex items-center justify-between gap-8 text-[var(--velo-text-muted)]">
             <span className="flex items-center gap-2">
               <span
                 className="size-2 shrink-0 rounded-full"
@@ -84,7 +112,7 @@ function BarTooltip({
               />
               {p.name}
             </span>
-            <span className="tabular-nums font-medium text-slate-900">{p.value}</span>
+            <span className="tabular-nums font-medium text-[var(--velo-text)]">{p.value}</span>
           </li>
         ))}
       </ul>
@@ -102,9 +130,46 @@ function PieTooltip({
   if (!active || !payload?.[0]) return null;
   const p = payload[0];
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-md">
-      <p className="font-semibold text-slate-800">{p.name}</p>
-      <p className="mt-0.5 tabular-nums text-slate-600">{p.value} incidencias</p>
+    <div className="rounded-xl border border-[var(--velo-border)] bg-white px-3 py-2 text-xs shadow-md">
+      <p className="font-semibold text-[var(--velo-text)]">{p.name}</p>
+      <p className="mt-0.5 tabular-nums text-[var(--velo-text-muted)]">{p.value} incidencias</p>
+    </div>
+  );
+}
+
+function AnalisisKpi({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  tone = "brand",
+}: {
+  icon: typeof Inbox;
+  label: string;
+  value: string | number;
+  sub?: string;
+  tone?: "brand" | "emerald" | "amber" | "violet";
+}) {
+  const tones = {
+    brand: "from-blue-500/10 to-blue-600/5 text-[var(--velo-brand)]",
+    emerald: "from-emerald-500/12 to-green-500/5 text-emerald-700",
+    amber: "from-amber-500/12 to-orange-500/5 text-amber-700",
+    violet: "from-violet-500/12 to-purple-500/5 text-violet-700",
+  };
+  return (
+    <div
+      className={`rounded-2xl border border-[var(--velo-border)] bg-gradient-to-br p-4 shadow-sm ${tones[tone]}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="flex size-9 items-center justify-center rounded-xl bg-white/90 shadow-sm">
+          <Icon size={18} />
+        </span>
+      </div>
+      <p className="mt-3 text-2xl font-bold tabular-nums text-[var(--velo-text)]">{value}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--velo-text-muted)]">
+        {label}
+      </p>
+      {sub && <p className="mt-0.5 text-[10px] text-[var(--velo-text-subtle)]">{sub}</p>}
     </div>
   );
 }
@@ -115,6 +180,7 @@ export function PanelAnalisis() {
   const [error, setError] = useState<string | null>(null);
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
+  const [rangoActivo, setRangoActivo] = useState<string>("todo");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -137,6 +203,17 @@ export function PanelAnalisis() {
     void load();
   }, [load]);
 
+  function aplicarRango(dias: number | null, id: string) {
+    setRangoActivo(id);
+    if (dias === null) {
+      setDesde("");
+      setHasta("");
+      return;
+    }
+    setDesde(isoHaceDias(dias));
+    setHasta(new Date().toISOString().slice(0, 10));
+  }
+
   const barData = useMemo(() => {
     if (!data?.porDepartamento.length) return [];
     return data.porDepartamento.map((d) => ({
@@ -158,220 +235,386 @@ export function PanelAnalisis() {
     }));
   }, [data]);
 
+  const vacio = !loading && data && data.totalIncidencias === 0;
+  const conDatos = !loading && data && data.totalIncidencias > 0;
+
+  const filtroLabel =
+    desde || hasta
+      ? `${desde || "…"} → ${hasta || "hoy"}`
+      : "Sin filtro de fechas";
+
   return (
-    <div className="space-y-8 text-left">
-      <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-indigo-700">
-            <LayoutDashboard size={14} className="text-indigo-600" />
-            Análisis de incidencias
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeader
+        title="Análisis de incidencias"
+        description="Rendimiento por departamento del solicitante, cumplimiento SLA y carga del equipo."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void load()}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-xl border border-[var(--velo-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--velo-text)] shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              <RefreshCw size={15} className={loading ? "animate-spin text-[var(--velo-brand)]" : ""} />
+              Actualizar
+            </button>
+            {data && data.totalIncidencias > 0 ? (
+              <button
+                type="button"
+                onClick={() => exportarCsv(data)}
+                className="inline-flex items-center gap-2 rounded-xl border border-[var(--velo-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--velo-text)] shadow-sm transition hover:bg-slate-50"
+              >
+                <Download size={15} />
+                CSV
+              </button>
+            ) : null}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Rendimiento por área</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">
-            Por <span className="font-medium text-slate-800">departamento del solicitante</span> y reparto por estado
-            (abiertas, en curso, resueltas).
-          </p>
+        }
+      />
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--velo-border)] bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="flex flex-wrap gap-1.5">
+          {RANGOS.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => aplicarRango(r.dias, r.id)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                rangoActivo === r.id
+                  ? "bg-[var(--velo-brand)] text-white shadow-sm"
+                  : "bg-slate-100 text-[var(--velo-text-muted)] hover:bg-slate-200"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
         </div>
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-xs text-slate-600">
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="flex flex-col gap-0.5 text-[10px] font-medium text-[var(--velo-text-muted)]">
             Desde
             <input
               type="date"
               value={desde}
-              onChange={(e) => setDesde(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800"
+              onChange={(e) => {
+                setDesde(e.target.value);
+                setRangoActivo("custom");
+              }}
+              className="rounded-lg border border-[var(--velo-border)] px-2.5 py-1.5 text-sm text-[var(--velo-text)]"
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs text-slate-600">
+          <label className="flex flex-col gap-0.5 text-[10px] font-medium text-[var(--velo-text-muted)]">
             Hasta
             <input
               type="date"
               value={hasta}
-              onChange={(e) => setHasta(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800"
+              onChange={(e) => {
+                setHasta(e.target.value);
+                setRangoActivo("custom");
+              }}
+              className="rounded-lg border border-[var(--velo-border)] px-2.5 py-1.5 text-sm text-[var(--velo-text)]"
             />
           </label>
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-          >
-            <RefreshCw size={16} className={loading ? "animate-spin text-indigo-600" : "text-slate-500"} />
-            Actualizar datos
-          </button>
-          {data ? (
-            <button
-              type="button"
-              onClick={() => exportarCsv(data)}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-            >
-              <Download size={16} />
-              Exportar CSV
-            </button>
-          ) : null}
         </div>
-      </header>
+        <p className="w-full text-[10px] text-[var(--velo-text-subtle)] sm:w-auto sm:text-right">
+          {filtroLabel}
+        </p>
+      </div>
 
       {error ? (
-        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-          <AlertCircle size={18} className="shrink-0 text-red-600" />
+        <div className="flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+          <AlertCircle size={18} className="shrink-0 text-rose-600" />
           {error}
         </div>
       ) : null}
 
       {loading && !data ? (
-        <div className="flex h-56 items-center justify-center rounded-2xl border border-slate-200 bg-white">
-          <RefreshCw className="size-9 animate-spin text-indigo-500" />
-        </div>
-      ) : data && data.totalIncidencias === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-8 py-14 text-center">
-          <p className="text-sm text-slate-600">
-            Aún no hay incidencias registradas. Los gráficos aparecerán cuando existan datos.
-          </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-28 animate-pulse rounded-2xl border border-[var(--velo-border)] bg-slate-100"
+            />
+          ))}
         </div>
       ) : data ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Total incidencias</p>
-              <p className="mt-2 text-3xl font-bold tabular-nums text-slate-900">{data.totalIncidencias}</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Tiempo medio cierre</p>
-              <p className="mt-2 text-3xl font-bold tabular-nums text-emerald-700">
-                {data.tiempoMedioResolucionHoras != null
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <AnalisisKpi icon={Inbox} label="Total incidencias" value={data.totalIncidencias} />
+            <AnalisisKpi
+              icon={Timer}
+              label="Tiempo medio cierre"
+              value={
+                data.tiempoMedioResolucionHoras != null
                   ? `${data.tiempoMedioResolucionHoras} h`
-                  : "—"}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Departamentos</p>
-              <p className="mt-2 text-3xl font-bold tabular-nums text-indigo-600">{data.porDepartamento.length}</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Estados distintos</p>
-              <p className="mt-2 text-3xl font-bold tabular-nums text-amber-700">{data.porEstado.length}</p>
-            </div>
-            {data.sla ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">SLA en plazo</p>
-                <p className="mt-2 text-3xl font-bold tabular-nums text-violet-700">
-                  {data.sla.porcentaje_en_plazo != null ? `${data.sla.porcentaje_en_plazo}%` : "—"}
-                </p>
-                <p className="mt-1 text-[10px] text-slate-500">
-                  {data.sla.en_plazo} de {data.sla.con_limite} con fecha límite
-                </p>
-              </div>
-            ) : null}
+                  : "—"
+              }
+              tone="emerald"
+            />
+            <AnalisisKpi
+              icon={Building2}
+              label="Departamentos"
+              value={data.porDepartamento.length}
+              tone="amber"
+            />
+            <AnalisisKpi
+              icon={TrendingUp}
+              label="Estados distintos"
+              value={data.porEstado.length}
+            />
+            <AnalisisKpi
+              icon={ShieldCheck}
+              label="SLA en plazo"
+              value={
+                data.sla?.porcentaje_en_plazo != null ? `${data.sla.porcentaje_en_plazo}%` : "—"
+              }
+              sub={
+                data.sla
+                  ? `${data.sla.en_plazo} de ${data.sla.con_limite} con límite`
+                  : "Sin datos de plazo"
+              }
+              tone="violet"
+            />
           </div>
 
-          {(data.tendenciaSemanal?.length ?? 0) > 0 ? (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-base font-semibold text-slate-900">Tendencia semanal</h2>
-              <p className="mt-1 text-xs text-slate-500">Incidencias creadas vs cerradas por semana.</p>
-              <div className="mt-6 h-[280px] w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={data.tendenciaSemanal}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="semana" tick={{ fontSize: 10 }} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="creadas" stroke="#6366f1" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="cerradas" stroke="#10b981" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
+          {vacio ? (
+            <section className="rounded-2xl border border-dashed border-[var(--velo-border)] bg-gradient-to-br from-slate-50/80 to-white px-6 py-12 text-center shadow-sm">
+              <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[var(--velo-brand-muted)] text-[var(--velo-brand)]">
+                <BarChart3 size={28} />
               </div>
+              <h2 className="mt-4 text-lg font-bold text-[var(--velo-text)]">
+                Aún no hay datos para analizar
+              </h2>
+              <p className="mx-auto mt-2 max-w-md text-sm text-[var(--velo-text-muted)]">
+                Los gráficos y el desglose por departamento aparecerán cuando existan incidencias en
+                el sistema. Puedes crear solicitudes desde el portal o cargar datos de demostración.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  to="/dashboard/incidencias"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[var(--velo-brand)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[var(--velo-brand-hover)]"
+                >
+                  <Kanban size={16} />
+                  Ir al tablero
+                </Link>
+                <a
+                  href="/portal"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--velo-border)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--velo-text)] hover:bg-slate-50"
+                >
+                  Portal empleado
+                </a>
+              </div>
+              <p className="mt-6 text-[11px] text-[var(--velo-text-subtle)]">
+                Desarrollo: <code className="rounded bg-slate-100 px-1.5 py-0.5">npm run seed:demo</code> en{" "}
+                <code className="rounded bg-slate-100 px-1.5 py-0.5">backend/</code>
+              </p>
             </section>
           ) : null}
 
-          {data.cargaPorAgente.length > 0 ? (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-base font-semibold text-slate-900">Carga por agente</h2>
-              <p className="mt-1 text-xs text-slate-500">Incidencias abiertas asignadas a cada agente.</p>
-              <ul className="mt-4 divide-y divide-slate-100">
-                {data.cargaPorAgente.map((a) => (
-                  <li key={a.agente_id} className="flex items-center justify-between py-2.5 text-sm">
-                    <span className="font-medium text-slate-800">{a.agente_nombre}</span>
-                    <span className="tabular-nums text-slate-600">
-                      <span className="font-semibold text-amber-700">{a.abiertas}</span> abiertas · {a.total} total
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
+          {conDatos ? (
+            <div className="space-y-5">
+              {(data.tendenciaSemanal?.length ?? 0) > 0 ? (
+                <section className="rounded-2xl border border-[var(--velo-border)] bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp size={16} className="text-[var(--velo-brand)]" />
+                    <h2 className="text-sm font-bold text-[var(--velo-text)]">Tendencia semanal</h2>
+                  </div>
+                  <p className="mt-0.5 text-xs text-[var(--velo-text-muted)]">
+                    Incidencias creadas vs cerradas por semana.
+                  </p>
+                  <div className="mt-4 h-[200px] w-full min-w-0 overflow-x-auto sm:h-[220px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={data.tendenciaSemanal}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="semana" tick={{ fontSize: 10 }} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        <Legend wrapperStyle={{ fontSize: 11 }} />
+                        <Line
+                          type="monotone"
+                          dataKey="creadas"
+                          name="Creadas"
+                          stroke="#0052cc"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="cerradas"
+                          name="Cerradas"
+                          stroke="#10b981"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </section>
+              ) : null}
+
+              <div className="grid gap-5 lg:grid-cols-5">
+                <section className="rounded-2xl border border-[var(--velo-border)] bg-white p-5 shadow-sm lg:col-span-3">
+                  <div className="flex items-center gap-2">
+                    <Building2 size={16} className="text-[var(--velo-brand)]" />
+                    <h2 className="text-sm font-bold text-[var(--velo-text)]">
+                      Por departamento del solicitante
+                    </h2>
+                  </div>
+                  <p className="mt-0.5 text-xs text-[var(--velo-text-muted)]">
+                    Abiertas, en curso, cerradas y otras por área.
+                  </p>
+                  <div className="mt-4 h-[240px] w-full min-w-0 overflow-x-auto sm:h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={barData} margin={{ top: 8, right: 8, left: 0, bottom: 44 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                        <XAxis
+                          dataKey="nombre"
+                          tick={{ fontSize: 10, fill: "#64748b" }}
+                          interval={0}
+                          angle={-22}
+                          textAnchor="end"
+                          height={56}
+                          tickLine={false}
+                          axisLine={{ stroke: "#e2e8f0" }}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 10, fill: "#64748b" }}
+                          allowDecimals={false}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <Tooltip
+                          cursor={{ fill: "rgba(0, 82, 204, 0.06)" }}
+                          content={<BarTooltip />}
+                        />
+                        <Legend wrapperStyle={{ paddingTop: 8, fontSize: 11 }} />
+                        <Bar
+                          dataKey="Abiertas"
+                          stackId="s"
+                          fill={BAR_FILLS.Abiertas}
+                          maxBarSize={40}
+                        />
+                        <Bar dataKey="En curso" stackId="s" fill={BAR_FILLS["En curso"]} maxBarSize={40} />
+                        <Bar dataKey="Cerradas" stackId="s" fill={BAR_FILLS.Cerradas} maxBarSize={40} />
+                        <Bar
+                          dataKey="Otras"
+                          stackId="s"
+                          fill={BAR_FILLS.Otras}
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={40}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </section>
+
+                <section className="rounded-2xl border border-[var(--velo-border)] bg-white p-5 shadow-sm lg:col-span-2">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 size={16} className="text-[var(--velo-brand)]" />
+                    <h2 className="text-sm font-bold text-[var(--velo-text)]">Por estado global</h2>
+                  </div>
+                  <p className="mt-0.5 text-xs text-[var(--velo-text-muted)]">
+                    Distribución de todas las incidencias.
+                  </p>
+                  <div className="mt-4 h-[220px] w-full min-w-0 sm:h-[260px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={48}
+                          outerRadius={78}
+                          paddingAngle={2}
+                          stroke="#fff"
+                          strokeWidth={2}
+                          label={({ name, percent }) =>
+                            percent > 0.08 ? `${name} ${(percent * 100).toFixed(0)}%` : ""
+                          }
+                          labelLine={{ stroke: "#cbd5e1" }}
+                        >
+                          {pieData.map((_, i) => (
+                            <Cell
+                              key={`pie-${i}-${pieData[i]!.key}`}
+                              fill={PIE_COLORS[i % PIE_COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<PieTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </section>
+              </div>
+
+              {data.cargaPorAgente.length > 0 ? (
+                <section className="rounded-2xl border border-[var(--velo-border)] bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <Users size={16} className="text-[var(--velo-brand)]" />
+                    <h2 className="text-sm font-bold text-[var(--velo-text)]">Carga por agente</h2>
+                  </div>
+                  <p className="mt-0.5 text-xs text-[var(--velo-text-muted)]">
+                    Incidencias abiertas asignadas a cada agente.
+                  </p>
+                  <ul className="mt-3 divide-y divide-[var(--velo-border)]">
+                    {data.cargaPorAgente.map((a) => {
+                      const maxAbiertas = Math.max(
+                        ...data.cargaPorAgente.map((x) => x.abiertas),
+                        1,
+                      );
+                      const barW = Math.round((a.abiertas / maxAbiertas) * 100) || 0;
+                      return (
+                        <li key={a.agente_id} className="py-3">
+                          <div className="flex items-center justify-between gap-4 text-sm">
+                            <span className="font-medium text-[var(--velo-text)]">{a.agente_nombre}</span>
+                            <span className="shrink-0 tabular-nums text-xs text-[var(--velo-text-muted)]">
+                              <span className="font-bold text-amber-700">{a.abiertas}</span> abiertas ·{" "}
+                              {a.total} total
+                            </span>
+                          </div>
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                            <div
+                              className="h-full rounded-full bg-[var(--velo-brand)] transition-all"
+                              style={{ width: `${barW}%` }}
+                            />
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ) : null}
+
+              {data.sla && data.sla.con_limite > 0 ? (
+                <section className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3">
+                    <p className="text-[10px] font-bold uppercase text-emerald-800">En plazo</p>
+                    <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-900">
+                      {data.sla.en_plazo}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-rose-200 bg-rose-50/60 px-4 py-3">
+                    <p className="text-[10px] font-bold uppercase text-rose-800">Fuera de plazo</p>
+                    <p className="mt-1 text-2xl font-bold tabular-nums text-rose-900">
+                      {data.sla.fuera_plazo}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-[var(--velo-border)] bg-slate-50/80 px-4 py-3">
+                    <p className="text-[10px] font-bold uppercase text-[var(--velo-text-muted)]">
+                      Con fecha límite
+                    </p>
+                    <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--velo-text)]">
+                      {data.sla.con_limite}
+                    </p>
+                  </div>
+                </section>
+              ) : null}
+            </div>
           ) : null}
-
-          <div className="grid gap-6 lg:grid-cols-5">
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-3">
-              <h2 className="text-base font-semibold text-slate-900">Por departamento del solicitante</h2>
-              <p className="mt-1 text-xs text-slate-500">
-                Incidencias abiertas, en curso, cerradas y otras por área.
-              </p>
-              <div className="mt-6 h-[340px] w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={barData} margin={{ top: 8, right: 8, left: 0, bottom: 48 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis
-                      dataKey="nombre"
-                      tick={{ fontSize: 11, fill: "#64748b" }}
-                      interval={0}
-                      angle={-24}
-                      textAnchor="end"
-                      height={68}
-                      stroke="#cbd5e1"
-                      tickLine={false}
-                      axisLine={{ stroke: "#e2e8f0" }}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11, fill: "#64748b" }}
-                      allowDecimals={false}
-                      stroke="#cbd5e1"
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <Tooltip cursor={{ fill: "rgba(99, 102, 241, 0.06)" }} content={<BarTooltip />} />
-                    <Legend wrapperStyle={{ paddingTop: 16, fontSize: 12 }} />
-                    <Bar dataKey="Abiertas" stackId="s" fill={BAR_FILLS.Abiertas} radius={[0, 0, 0, 0]} maxBarSize={48} />
-                    <Bar dataKey="En curso" stackId="s" fill={BAR_FILLS["En curso"]} maxBarSize={48} />
-                    <Bar dataKey="Cerradas" stackId="s" fill={BAR_FILLS.Cerradas} maxBarSize={48} />
-                    <Bar dataKey="Otras" stackId="s" fill={BAR_FILLS.Otras} radius={[4, 4, 0, 0]} maxBarSize={48} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
-              <h2 className="text-base font-semibold text-slate-900">Por estado global</h2>
-              <p className="mt-1 text-xs text-slate-500">Distribución de todas las incidencias por estado.</p>
-              <div className="mt-6 h-[300px] w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={52}
-                      outerRadius={88}
-                      paddingAngle={2}
-                      stroke="#fff"
-                      strokeWidth={2}
-                      label={({ name, percent }) => (percent > 0.08 ? `${name} ${(percent * 100).toFixed(0)}%` : "")}
-                      labelLine={{ stroke: "#cbd5e1" }}
-                    >
-                      {pieData.map((_, i) => (
-                        <Cell key={`pie-${i}-${pieData[i]!.key}`} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<PieTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
-          </div>
         </>
       ) : null}
     </div>

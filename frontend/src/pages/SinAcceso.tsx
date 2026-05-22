@@ -13,7 +13,7 @@ export function SinAcceso() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
-      <div className="max-w-md rounded-lg border border-[var(--velo-border)] bg-white p-8 text-center shadow-md">
+      <div className="max-w-md rounded-lg border border-[var(--velo-border)] bg-white p-5 text-center shadow-md sm:p-8">
         <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-amber-50 text-amber-600">
           <ShieldOff size={28} />
         </div>

@@ -66,7 +66,7 @@ export function PortalMisSolicitudesView({
   const mostrarDetalleMovil = seleccionadaId != null;
 
   return (
-    <div className="portal-animate-in portal-stagger-2 grid min-h-[min(720px,calc(100vh-14rem))] gap-4 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)]">
+    <div className="portal-animate-in portal-stagger-2 grid min-h-0 gap-4 lg:min-h-[min(640px,calc(100dvh-12rem))] lg:grid-cols-[minmax(260px,360px)_minmax(0,1fr)]">
       <aside
         className={`portal-card flex flex-col overflow-hidden ${
           mostrarDetalleMovil ? "hidden lg:flex" : "flex"
@@ -229,7 +229,7 @@ export function PortalMisSolicitudesView({
       </aside>
 
       <section
-        className={`portal-card flex min-h-[480px] flex-col overflow-hidden ${
+        className={`portal-card flex min-h-0 flex-col overflow-hidden lg:min-h-[480px] ${
           mostrarDetalleMovil ? "flex" : "hidden lg:flex"
         }`}
       >

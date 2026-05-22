@@ -95,6 +95,37 @@ export function puedeCambiarEstadoEnTablero(
   return incidenciaEnScopeKanban(incidencia, usuarioId, equiposUsuario);
 }
 
+export type EquipoListItem = {
+  codigo: string;
+  nombre: string;
+  miembros: number;
+};
+
+/** Catálogo desde BD (con recuento de agentes); fallback al catálogo fijo si la tabla está vacía. */
+export async function listEquiposConMiembros(): Promise<EquipoListItem[]> {
+  try {
+    const { rows } = await pool.query<{ codigo: string; nombre: string; miembros: string }>(
+      `
+      SELECT e.codigo, e.nombre, COUNT(ue.usuario_id)::text AS miembros
+      FROM equipos e
+      LEFT JOIN usuario_equipos ue ON ue.equipo_id = e.id
+      GROUP BY e.id, e.codigo, e.nombre
+      ORDER BY e.codigo
+    `,
+    );
+    if (rows.length > 0) {
+      return rows.map((r) => ({
+        codigo: r.codigo,
+        nombre: r.nombre,
+        miembros: Number(r.miembros) || 0,
+      }));
+    }
+  } catch {
+    /* tabla aún no provisionada */
+  }
+  return EQUIPOS_CATALOGO.map((e) => ({ codigo: e.codigo, nombre: e.nombre, miembros: 0 }));
+}
+
 export async function clearUsuarioEquipos(usuarioId: number): Promise<void> {
   await pool.query(`DELETE FROM usuario_equipos WHERE usuario_id = $1`, [usuarioId]);
 }

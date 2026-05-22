@@ -69,7 +69,7 @@ export function Login() {
           </Link>
         </div>
 
-        <div className="rounded-lg border border-[var(--velo-border)] bg-white p-8 shadow-md">
+        <div className="rounded-lg border border-[var(--velo-border)] bg-white p-5 shadow-md sm:p-8">
           <h1 className="text-xl font-bold text-[var(--velo-text)]">Iniciar sesión</h1>
           <p className="mt-1 text-sm text-[var(--velo-text-muted)]">
             Accede al portal de incidencias de tu empresa

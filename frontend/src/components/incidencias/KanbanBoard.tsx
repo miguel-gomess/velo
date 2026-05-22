@@ -467,7 +467,7 @@ export function KanbanBoard({
           }
         }}
       >
-        <div className="kanban-columns min-h-[min(68vh,680px)] max-h-[calc(100vh-14rem)]">
+        <div className="kanban-columns min-h-[min(50dvh,420px)] max-h-[calc(100dvh-11rem)] sm:min-h-[min(60vh,560px)] sm:max-h-[calc(100vh-13rem)] lg:min-h-[min(68vh,680px)] lg:max-h-[calc(100vh-14rem)]">
           {KANBAN_COLUMNAS.map((col) => (
             <KanbanColumn
               key={col.id}

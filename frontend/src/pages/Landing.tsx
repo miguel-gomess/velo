@@ -23,7 +23,7 @@ const FEATURES = [
 export function Landing() {
   return (
     <div className="landing-shell flex min-h-screen flex-col">
-      <header className="landing-header mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
+      <header className="landing-header mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-5 safe-area-pt sm:px-6 sm:py-6">
         <AppLogo />
         <Link
           to="/login"
@@ -33,13 +33,13 @@ export function Landing() {
         </Link>
       </header>
 
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 pb-16 pt-4">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-4 pb-12 pt-4 safe-area-pb sm:px-6 sm:pb-16">
         <div className="landing-hero grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div className="landing-hero-copy">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--velo-brand)]">
               Gestión interna
             </p>
-            <h1 className="mt-3 text-4xl font-extrabold leading-[1.1] tracking-tight text-[var(--velo-text)] sm:text-5xl">
+            <h1 className="mt-3 text-3xl font-extrabold leading-[1.1] tracking-tight text-[var(--velo-text)] sm:text-4xl lg:text-5xl">
               Incidencias con el ritmo de tu equipo
             </h1>
             <p className="mt-4 max-w-lg text-base leading-relaxed text-[var(--velo-text-muted)]">

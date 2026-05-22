@@ -2,7 +2,7 @@ import { NavLink, Navigate, Outlet } from "react-router-dom";
 import { authClient } from "../lib/authClient";
 import { useProfile } from "../hooks/useProfile";
 import { ADMIN_DEPT } from "../lib/roles";
-import { AppLogo } from "../components/layout/AppLogo";
+import { AdminShell } from "../components/layout/AdminShell";
 import { PageLoading } from "../components/layout/PageLoading";
 import { UserAvatar } from "../components/UserAvatar";
 import {
@@ -67,16 +67,10 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--velo-bg)]">
-      <aside className="flex w-64 shrink-0 flex-col border-r border-[var(--velo-border)] bg-white">
-        <div className="border-b border-[var(--velo-border)] px-5 py-5">
-          <AppLogo size="sm" />
-          <p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--velo-text-subtle)]">
-            Panel administración
-          </p>
-        </div>
-
-        <nav className="flex flex-1 flex-col gap-1 p-4">
+    <AdminShell
+      panelLabel="Panel administración"
+      nav={
+        <>
           {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} className={({ isActive }) => navClass(isActive)}>
               <Icon size={18} strokeWidth={2} />
@@ -92,34 +86,31 @@ export function Dashboard() {
             Portal empleado
             <ExternalLink size={14} className="ml-auto opacity-50" />
           </NavLink>
-        </nav>
-
-        <div className="border-t border-[var(--velo-border)] p-4">
-          <div className="flex items-center gap-3 rounded-md bg-slate-50 p-3">
-            <UserAvatar
-              nombre={session.user.name ?? "Usuario"}
-              userId={profile.user?.id}
-              size="lg"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{session.user.name}</p>
-              <p className="truncate text-xs text-[var(--velo-text-subtle)]">{dept}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => authClient.signOut()}
-              className="text-[var(--velo-text-subtle)] hover:text-rose-600"
-              aria-label="Cerrar sesión"
-            >
-              <LogOut size={18} />
-            </button>
+        </>
+      }
+      footer={
+        <div className="flex items-center gap-3 rounded-md bg-slate-50 p-3">
+          <UserAvatar
+            nombre={session.user.name ?? "Usuario"}
+            userId={profile.user?.id}
+            size="lg"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{session.user.name}</p>
+            <p className="truncate text-xs text-[var(--velo-text-subtle)]">{dept}</p>
           </div>
+          <button
+            type="button"
+            onClick={() => authClient.signOut()}
+            className="shrink-0 text-[var(--velo-text-subtle)] hover:text-rose-600"
+            aria-label="Cerrar sesión"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
-      </aside>
-
-      <main className="min-h-0 flex-1 overflow-y-auto p-6 lg:p-8">
-        <Outlet />
-      </main>
-    </div>
+      }
+    >
+      <Outlet />
+    </AdminShell>
   );
 }

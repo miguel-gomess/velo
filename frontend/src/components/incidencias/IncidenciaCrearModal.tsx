@@ -221,7 +221,7 @@ export function IncidenciaCrearModal({ me, esAdmin, onClose, onCreada }: Props) 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div className="velo-modal-shell fixed inset-0 z-50 flex sm:p-6">
       <button
         type="button"
         className="absolute inset-0 bg-[#091e42]/50 backdrop-blur-[2px]"
@@ -233,7 +233,7 @@ export function IncidenciaCrearModal({ me, esAdmin, onClose, onCreada }: Props) 
         role="dialog"
         aria-modal="true"
         aria-labelledby="issue-title"
-        className="relative flex max-h-[min(92vh,960px)] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-[var(--velo-border)] bg-[var(--velo-surface)] shadow-[var(--velo-shadow-md)]"
+        className="velo-modal-dialog relative flex w-full max-w-6xl flex-col overflow-hidden border border-[var(--velo-border)] bg-[var(--velo-surface)] shadow-[var(--velo-shadow-md)] sm:rounded-xl"
         onClick={(ev) => ev.stopPropagation()}
       >
         <header className="flex shrink-0 items-center gap-3 border-b border-[var(--velo-border)] bg-[var(--velo-surface)] px-4 py-3 sm:px-6">

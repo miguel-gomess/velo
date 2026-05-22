@@ -459,7 +459,7 @@ export function DirectorioPanel() {
 
   return (
     <div className="directorio-panel">
-      <header className="directorio-hero mb-8 p-6 sm:p-8">
+      <header className="directorio-hero mb-6 p-4 sm:mb-8 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-[var(--velo-text)] sm:text-3xl">

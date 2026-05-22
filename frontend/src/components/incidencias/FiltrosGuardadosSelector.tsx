@@ -22,7 +22,7 @@ export function FiltrosGuardadosSelector({ presets, presetActivo, onSelect }: Pr
   const label = activo?.nombre ?? "Guardados";
 
   return (
-    <div ref={rootRef} className="relative min-w-[9.5rem] max-w-[13rem]">
+    <div ref={rootRef} className="relative min-w-0 max-w-full sm:min-w-[9.5rem] sm:max-w-[13rem]">
       <button
         type="button"
         onClick={toggle}
