@@ -40,6 +40,22 @@ body {
 }
 
 /* Portal empleado — capa visual */
+.landing-shell {
+  min-height: 100%;
+  background-color: #eef1f8;
+  background-image:
+    radial-gradient(ellipse 100% 70% at 0% -10%, rgba(37, 99, 235, 0.12), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 100% 20%, rgba(0, 135, 90, 0.06), transparent 50%);
+}
+
+.landing-hero-copy {
+  animation: portal-fade-up 0.55s ease both;
+}
+
+.landing-hero-panel {
+  animation: portal-fade-up 0.55s ease 0.12s both;
+}
+
 .portal-shell {
   --portal-ink: #091e42;
   --portal-glow: rgba(0, 82, 204, 0.08);

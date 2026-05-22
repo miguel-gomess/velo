@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { authClient } from "../lib/authClient";
 import { apiGetMe } from "../lib/api";
 import { parseIncidenciaIdDesdeSearch, rutaIncidenciaParaUsuario } from "../lib/incidenciaEnlace";
@@ -63,8 +63,10 @@ export function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--velo-bg)] px-4">
       <div className="w-full max-w-md">
-        <div className="mb-8 flex justify-center">
-          <AppLogo />
+        <div className="mb-8 flex flex-col items-center gap-4">
+          <Link to="/" className="transition opacity-90 hover:opacity-100">
+            <AppLogo />
+          </Link>
         </div>
 
         <div className="rounded-lg border border-[var(--velo-border)] bg-white p-8 shadow-md">
@@ -134,8 +136,10 @@ export function Login() {
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-[var(--velo-text-subtle)]">
-          Velo · Sistema de gestión de incidencias internas
+        <p className="mt-6 text-center text-sm text-[var(--velo-text-subtle)]">
+          <Link to="/" className="font-medium text-[var(--velo-brand)] hover:underline">
+            ← Volver al inicio
+          </Link>
         </p>
       </div>
     </div>

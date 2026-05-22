@@ -7,6 +7,7 @@ import { DirectorioPanel } from "./pages/dashboard/DirectorioPanel";
 import { IncidenciasPanel } from "./pages/dashboard/IncidenciasPanel";
 import { PanelAnalisis } from "./pages/dashboard/AnalisisPanel";
 import { ConfigPanel } from "./pages/dashboard/ConfigPanel";
+import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { Portal } from "./pages/Portal";
 import { Workspace } from "./pages/Workspace";
@@ -18,10 +19,7 @@ function App() {
 
   return (
     <Routes>
-      <Route
-        path="/"
-        element={session ? <HomeRedirect /> : <Navigate to="/login" replace />}
-      />
+      <Route path="/" element={session ? <HomeRedirect /> : <Landing />} />
       <Route path="/login" element={session ? <HomeRedirect /> : <Login />} />
       <Route path="/sin-acceso" element={<SinAcceso />} />
       <Route
