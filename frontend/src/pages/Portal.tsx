@@ -81,7 +81,7 @@ export function Portal() {
 
   if (isPending || (email && !profile.ready)) {
     return (
-      <div className="portal-shell flex h-svh">
+      <div className="portal-shell min-h-svh w-full">
         <PageLoading label="Cargando portal…" />
       </div>
     );

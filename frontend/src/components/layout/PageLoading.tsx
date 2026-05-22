@@ -1,9 +1,17 @@
 import { Loader2 } from "lucide-react";
 
-export function PageLoading({ label = "Cargando…" }: { label?: string }) {
+type Props = {
+  label?: string;
+  /** Ocupa la ventana y centra el contenido (pantallas de carga a pantalla completa). */
+  pantallaCompleta?: boolean;
+};
+
+export function PageLoading({ label = "Cargando…", pantallaCompleta = true }: Props) {
   return (
     <div
-      className="flex min-h-[40vh] flex-col items-center justify-center gap-3"
+      className={`flex w-full flex-col items-center justify-center gap-3 ${
+        pantallaCompleta ? "min-h-svh" : "min-h-[40vh]"
+      }`}
       role="status"
       aria-live="polite"
       aria-busy="true"
