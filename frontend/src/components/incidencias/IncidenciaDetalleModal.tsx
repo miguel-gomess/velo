@@ -26,6 +26,7 @@ import {
   type EstadoKanban,
 } from "../../lib/incidencias";
 import { validarImagen } from "../../lib/imagenes";
+import { AuthImage } from "../AuthImage";
 import {
   ComentarioEditor,
   prepararContenidoMensaje,
@@ -680,7 +681,7 @@ export function IncidenciaDetalleModal({
                             onClick={() => setLightboxUrl(url)}
                             className="group relative size-20 overflow-hidden rounded-md border border-[var(--velo-border)] bg-[var(--velo-bg)] shadow-[var(--velo-shadow)]"
                           >
-                            <img
+                            <AuthImage
                               src={url}
                               alt={adj.nombre_original}
                               className="size-full object-cover transition-transform group-hover:scale-105"
@@ -987,7 +988,7 @@ export function IncidenciaDetalleModal({
           >
             <X size={22} />
           </button>
-          <img
+          <AuthImage
             src={lightboxUrl}
             alt="Vista ampliada"
             className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"

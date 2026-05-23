@@ -78,9 +78,9 @@ export async function POST(
     const { rows } = await pool.query<AdjuntoRow>(
       `
       INSERT INTO incidencia_adjuntos (
-        incidencia_id, autor_id, ruta, nombre_original, mime_type, tamano_bytes, tipo
+        incidencia_id, autor_id, ruta, nombre_original, mime_type, tamano_bytes, tipo, contenido
       )
-      VALUES ($1, $2, $3, $4, $5, $6, 'evidencia')
+      VALUES ($1, $2, $3, $4, $5, $6, 'evidencia', $7)
       RETURNING id, incidencia_id, autor_id, ruta, nombre_original, mime_type, tamano_bytes, fecha_creacion
     `,
       [
@@ -90,6 +90,7 @@ export async function POST(
         guardada.nombre_original,
         guardada.mime_type,
         guardada.tamano_bytes,
+        guardada.buffer,
       ],
     );
 

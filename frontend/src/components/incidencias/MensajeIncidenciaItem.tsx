@@ -2,6 +2,7 @@ import { apiAssetUrl } from "../../lib/api";
 import type { IncidenciaMensaje } from "../../lib/api";
 import { limpiarMarcadoresMensaje } from "../../lib/imagenes";
 import { TextoConImagenes } from "./TextoConImagenes";
+import { AuthImage } from "../AuthImage";
 import { UserAvatar } from "../UserAvatar";
 import { TiempoRelativo } from "../TiempoRelativo";
 import { Lock } from "lucide-react";
@@ -64,7 +65,7 @@ export function MensajeIncidenciaItem({ mensaje, onImagenClick, className = "" }
                 onClick={() => onImagenClick?.(imgUrlLegacy)}
                 className="jira-description-media__img-btn"
               >
-                <img src={imgUrlLegacy} alt="Adjunto" />
+                <AuthImage src={imgUrlLegacy} alt="Adjunto" className="max-w-full" />
               </button>
             </figure>
           )}

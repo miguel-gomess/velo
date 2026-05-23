@@ -33,6 +33,7 @@ export type ImagenGuardada = {
   mime_type: string;
   tamano_bytes: number;
   nombre_original: string;
+  buffer: Buffer;
 };
 
 function incidenciaIdDesdeRuta(rutaRelativa: string): number {
@@ -43,12 +44,23 @@ function incidenciaIdDesdeRuta(rutaRelativa: string): number {
   return id;
 }
 
+function bytesDesdePg(val: unknown): Buffer | null {
+  if (val == null) return null;
+  if (Buffer.isBuffer(val)) return val;
+  if (val instanceof Uint8Array) return Buffer.from(val);
+  if (typeof val === "string") {
+    if (val.startsWith("\\x")) return Buffer.from(val.slice(2), "hex");
+    return Buffer.from(val, "binary");
+  }
+  return null;
+}
+
 async function guardarEnDb(
   rutaRelativa: string,
   buffer: Buffer,
   mime: string,
 ): Promise<void> {
-  await asegurarTablaArchivos();
+  await asegurarAlmacenArchivos();
   const incidenciaId = incidenciaIdDesdeRuta(rutaRelativa);
   await pool.query(
     `
@@ -63,15 +75,29 @@ async function guardarEnDb(
   );
 }
 
-async function leerDesdeDb(rutaRelativa: string): Promise<Buffer | null> {
+async function leerDesdeDb(rutaRelativa: string): Promise<{ buffer: Buffer; mime_type: string } | null> {
   try {
-    await asegurarTablaArchivos();
+    await asegurarAlmacenArchivos();
     const incidenciaId = incidenciaIdDesdeRuta(rutaRelativa);
-    const { rows } = await pool.query<{ contenido: Buffer }>(
-      `SELECT contenido FROM incidencia_archivos WHERE incidencia_id = $1 AND ruta = $2`,
+    const { rows } = await pool.query<{ contenido: unknown; mime_type: string }>(
+      `SELECT contenido, mime_type FROM incidencia_archivos WHERE incidencia_id = $1 AND ruta = $2`,
       [incidenciaId, rutaRelativa],
     );
-    return rows[0]?.contenido ?? null;
+    const buffer = bytesDesdePg(rows[0]?.contenido);
+    if (buffer && buffer.length > 0) {
+      return { buffer, mime_type: rows[0]?.mime_type ?? "application/octet-stream" };
+    }
+
+    const adj = await pool.query<{ contenido: unknown; mime_type: string }>(
+      `SELECT contenido, mime_type FROM incidencia_adjuntos WHERE incidencia_id = $1 AND ruta = $2 AND contenido IS NOT NULL`,
+      [incidenciaId, rutaRelativa],
+    );
+    const adjBuffer = bytesDesdePg(adj.rows[0]?.contenido);
+    if (adjBuffer && adjBuffer.length > 0) {
+      return { buffer: adjBuffer, mime_type: adj.rows[0]?.mime_type ?? "application/octet-stream" };
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -81,12 +107,12 @@ async function borrarEnDb(incidenciaId: number): Promise<void> {
   await pool.query(`DELETE FROM incidencia_archivos WHERE incidencia_id = $1`, [incidenciaId]);
 }
 
-let tablaArchivosLista: Promise<void> | null = null;
+let almacenArchivosListo: Promise<void> | null = null;
 
-async function asegurarTablaArchivos(): Promise<void> {
-  if (!tablaArchivosLista) {
-    tablaArchivosLista = pool
-      .query(`
+async function asegurarAlmacenArchivos(): Promise<void> {
+  if (!almacenArchivosListo) {
+    almacenArchivosListo = (async () => {
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS incidencia_archivos (
           id SERIAL PRIMARY KEY,
           incidencia_id INTEGER NOT NULL REFERENCES incidencias(id) ON DELETE CASCADE,
@@ -97,10 +123,13 @@ async function asegurarTablaArchivos(): Promise<void> {
           fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
           UNIQUE (incidencia_id, ruta)
         );
-      `)
-      .then(() => undefined);
+      `);
+      await pool.query(`
+        ALTER TABLE incidencia_adjuntos ADD COLUMN IF NOT EXISTS contenido BYTEA;
+      `);
+    })();
   }
-  await tablaArchivosLista;
+  await almacenArchivosListo;
 }
 
 /**
@@ -232,6 +261,7 @@ export async function guardarImagenInlineIncidencia(
     mime_type: mime,
     tamano_bytes: file.size,
     nombre_original: file.name || nombre,
+    buffer,
   };
 }
 
@@ -250,6 +280,7 @@ export async function guardarImagenIncidencia(
     mime_type: mime,
     tamano_bytes: file.size,
     nombre_original: file.name || nombre,
+    buffer,
   };
 }
 
@@ -268,11 +299,15 @@ export async function leerImagen(rutaRelativa: string): Promise<{
 }> {
   const desdeDb = await leerDesdeDb(rutaRelativa);
   if (desdeDb) {
-    const mimeReal = detectarMimeReal(desdeDb);
+    const mimeReal = detectarMimeReal(desdeDb.buffer) ?? desdeDb.mime_type;
     return {
-      buffer: desdeDb,
-      mime_type: mimeReal ?? "application/octet-stream",
+      buffer: desdeDb.buffer,
+      mime_type: mimeReal,
     };
+  }
+
+  if (usarAlmacenDb()) {
+    throw new Error("Archivo no encontrado");
   }
 
   const buffer = await readFile(rutaAbsoluta(rutaRelativa));

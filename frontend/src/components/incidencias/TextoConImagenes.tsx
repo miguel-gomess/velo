@@ -1,4 +1,5 @@
 import { apiAssetUrl } from "../../lib/api";
+import { AuthImage } from "../AuthImage";
 import { parseAltConWidth } from "../../lib/imagenes";
 
 const IMG_MD = /!\[([^\]]*)\]\(([^)]+)\)/g;
@@ -51,7 +52,7 @@ function ImagenBloque({
           onClick={() => onImagenClick?.(src)}
           className="jira-description-media__img-btn"
         >
-          <img src={src} alt={alt} />
+          <AuthImage src={src} alt={alt} />
         </button>
       </figure>
     );
@@ -66,7 +67,7 @@ function ImagenBloque({
         className="block max-w-full overflow-hidden rounded-lg border border-[var(--velo-border)] bg-white text-left shadow-sm transition hover:ring-2 hover:ring-[var(--velo-brand-muted)]"
         style={imgStyle}
       >
-        <img
+        <AuthImage
           src={src}
           alt={alt}
           className={

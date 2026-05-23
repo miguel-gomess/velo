@@ -9,8 +9,8 @@ import {
 } from "@dnd-kit/core";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import type { Incidencia, Usuario } from "../../lib/api";
-import { apiAssetUrl } from "../../lib/api";
+import { apiAssetUrl, type Incidencia, type Usuario } from "../../lib/api";
+import { AuthImage } from "../AuthImage";
 import { CopiarEnlaceIncidenciaButton } from "./CopiarEnlaceIncidenciaButton";
 import {
   KANBAN_COLUMNAS,
@@ -142,7 +142,7 @@ function CardLayout({
 
       {imagenPortada && !isDragging && (
         <div className="relative h-28 overflow-hidden border-b border-[var(--velo-border)] bg-slate-100">
-          <img
+          <AuthImage
             src={imagenPortada}
             alt=""
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

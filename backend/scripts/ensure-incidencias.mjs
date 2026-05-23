@@ -115,6 +115,10 @@ await pool.query(
 );
 
 await pool.query(`
+  ALTER TABLE incidencia_adjuntos ADD COLUMN IF NOT EXISTS contenido BYTEA;
+`);
+
+await pool.query(`
   CREATE TABLE IF NOT EXISTS incidencia_archivos (
     id SERIAL PRIMARY KEY,
     incidencia_id INTEGER NOT NULL REFERENCES incidencias(id) ON DELETE CASCADE,
