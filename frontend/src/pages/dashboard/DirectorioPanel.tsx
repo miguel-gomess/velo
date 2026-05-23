@@ -29,6 +29,8 @@ import {
   UserRound,
   Check,
   LogIn,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { entrarComoUsuario } from "../../lib/impersonate";
 import { useProfile } from "../../hooks/useProfile";
@@ -37,6 +39,7 @@ import { useImpersonation } from "../../hooks/useImpersonation";
 import { authClient } from "../../lib/authClient";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USUARIOS_POR_PAGINA = 5;
 
 function validarFormularioAlta(fields: {
   nombre: string;
@@ -274,6 +277,7 @@ export function DirectorioPanel() {
   const puedeImpersonar = esSuperadminEfectivo && !isImpersonating && !authPending;
 
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
   const [items, setItems] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -324,6 +328,23 @@ export function DirectorioPanel() {
     const t = setTimeout(() => void cargar(q), 220);
     return () => clearTimeout(t);
   }, [q, cargar]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [q]);
+
+  const totalPaginas = Math.max(1, Math.ceil(items.length / USUARIOS_POR_PAGINA));
+
+  useEffect(() => {
+    if (page > totalPaginas) setPage(totalPaginas);
+  }, [page, totalPaginas]);
+
+  const paginaActual = Math.min(page, totalPaginas);
+  const indiceInicio = (paginaActual - 1) * USUARIOS_POR_PAGINA;
+  const usuariosPagina = useMemo(
+    () => items.slice(indiceInicio, indiceInicio + USUARIOS_POR_PAGINA),
+    [items, indiceInicio],
+  );
 
   function onEntrarComo(email: string, usuario?: Usuario) {
     const target = email.trim().toLowerCase();
@@ -702,7 +723,7 @@ export function DirectorioPanel() {
               )}
 
               {!loading &&
-                items.map((u) => (
+                usuariosPagina.map((u) => (
                   <tr key={u.id}>
                     <td className="px-5 py-4 sm:px-6">
                       <div className="flex items-center gap-3">
@@ -772,6 +793,43 @@ export function DirectorioPanel() {
             </tbody>
           </table>
         </div>
+
+        {!loading && items.length > USUARIOS_POR_PAGINA && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--velo-border)] px-5 py-3.5 sm:px-6">
+            <p className="text-xs text-[var(--velo-text-muted)]">
+              Mostrando{" "}
+              <span className="font-semibold text-[var(--velo-text)]">
+                {indiceInicio + 1}–{Math.min(indiceInicio + USUARIOS_POR_PAGINA, items.length)}
+              </span>{" "}
+              de {items.length}
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={paginaActual <= 1}
+                className="inline-flex items-center gap-1 rounded-md border border-[var(--velo-border)] bg-white px-2.5 py-1.5 text-xs font-semibold text-[var(--velo-text)] transition hover:bg-[var(--velo-bg)] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Página anterior"
+              >
+                <ChevronLeft size={16} />
+                Anterior
+              </button>
+              <span className="min-w-[5.5rem] px-2 text-center text-xs font-medium tabular-nums text-[var(--velo-text-muted)]">
+                {paginaActual} / {totalPaginas}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPaginas, p + 1))}
+                disabled={paginaActual >= totalPaginas}
+                className="inline-flex items-center gap-1 rounded-md border border-[var(--velo-border)] bg-white px-2.5 py-1.5 text-xs font-semibold text-[var(--velo-text)] transition hover:bg-[var(--velo-bg)] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Página siguiente"
+              >
+                Siguiente
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       {openCreate && (
