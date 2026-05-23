@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Velo",
+  title: "Velo — Gestión de incidencias",
   description: "Gestión de incidencias internas",
+  icons: {
+    icon: [{ url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" }],
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 /** Layout mínimo: la UI es la SPA de Vite en public/index.html */
