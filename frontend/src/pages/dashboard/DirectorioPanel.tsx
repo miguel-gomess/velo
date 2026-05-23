@@ -28,7 +28,13 @@ import {
   Lock,
   UserRound,
   Check,
+  LogIn,
 } from "lucide-react";
+import { entrarComoUsuario } from "../../lib/impersonate";
+import { useProfile } from "../../hooks/useProfile";
+import { isSuperadminEmailClient } from "../../lib/superadmin";
+import { useImpersonation } from "../../hooks/useImpersonation";
+import { authClient } from "../../lib/authClient";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -255,6 +261,18 @@ function AdminPrivilegioToggle({
 }
 
 export function DirectorioPanel() {
+  const { data: authSession, isPending: authPending } = authClient.useSession();
+  const authEmail = authSession?.user?.email?.trim() ?? null;
+  const profile = useProfile(authEmail);
+  const { isImpersonating } = useImpersonation();
+
+  const esSuperadminEfectivo =
+    isSuperadminEmailClient(authEmail) ||
+    profile.user?.es_superadmin === true ||
+    isSuperadminEmailClient(profile.user?.email);
+
+  const puedeImpersonar = esSuperadminEfectivo && !isImpersonating && !authPending;
+
   const [q, setQ] = useState("");
   const [items, setItems] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
@@ -284,6 +302,10 @@ export function DirectorioPanel() {
   const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
+  const [impersonateEmail, setImpersonateEmail] = useState("");
+  const [impersonating, setImpersonating] = useState(false);
+  const [impersonateError, setImpersonateError] = useState<string | null>(null);
+
   const cargar = useCallback(async (query: string) => {
     setLoading(true);
     setError(null);
@@ -302,6 +324,22 @@ export function DirectorioPanel() {
     const t = setTimeout(() => void cargar(q), 220);
     return () => clearTimeout(t);
   }, [q, cargar]);
+
+  function onEntrarComo(email: string, usuario?: Usuario) {
+    const target = email.trim().toLowerCase();
+    if (!target) {
+      setImpersonateError("Escribe el email del usuario");
+      return;
+    }
+    setImpersonating(true);
+    setImpersonateError(null);
+    try {
+      entrarComoUsuario(target, usuario);
+    } catch (e) {
+      setImpersonateError(e instanceof Error ? e.message : "No se pudo cambiar de usuario");
+      setImpersonating(false);
+    }
+  }
 
   const stats = useMemo(
     () => ({
@@ -496,6 +534,63 @@ export function DirectorioPanel() {
         </div>
       </header>
 
+      {puedeImpersonar && (
+        <section
+          className="mb-6 rounded-xl border border-violet-200 bg-violet-50/80 p-4 sm:p-5"
+          aria-label="Acceso como otro usuario"
+        >
+          <p className="text-sm font-semibold text-violet-950">Entrar como otro usuario</p>
+          <p className="mt-1 text-xs text-violet-800/90">
+            Sin cerrar tu sesión de superadmin. Escribe el email o usa el botón en cada fila del
+            directorio.
+          </p>
+          <form
+            className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const match = items.find(
+                (u) => u.email.trim().toLowerCase() === impersonateEmail.trim().toLowerCase(),
+              );
+              onEntrarComo(impersonateEmail, match);
+            }}
+          >
+            <label className="directorio-search min-w-0 flex-1 border-violet-200 bg-white">
+              <Mail size={18} className="shrink-0 text-violet-400" aria-hidden />
+              <input
+                type="email"
+                value={impersonateEmail}
+                onChange={(e) => {
+                  setImpersonateEmail(e.target.value);
+                  setImpersonateError(null);
+                }}
+                placeholder="usuario@velo.com"
+                autoComplete="off"
+                disabled={impersonating}
+                aria-label="Email del usuario a impersonar"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={impersonating || !impersonateEmail.trim()}
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-700 px-5 text-sm font-semibold text-white hover:bg-violet-800 disabled:opacity-50"
+            >
+              {impersonating ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <LogIn size={17} />
+              )}
+              Entrar como
+            </button>
+          </form>
+          {impersonateError && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-rose-700">
+              <AlertCircle size={14} />
+              {impersonateError}
+            </p>
+          )}
+        </section>
+      )}
+
       {error && !openCreate && !editing && (
         <div
           className="mb-6 flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
@@ -639,6 +734,18 @@ export function DirectorioPanel() {
                     </td>
                     <td className="px-5 py-4 sm:px-6">
                       <div className="flex justify-end gap-1">
+                        {puedeImpersonar && (
+                          <button
+                            type="button"
+                            onClick={() => onEntrarComo(u.email, u)}
+                            disabled={impersonating}
+                            className="directorio-action-btn text-violet-700 hover:bg-violet-50"
+                            title={`Entrar como ${u.email}`}
+                            aria-label={`Entrar como ${u.nombre}`}
+                          >
+                            <LogIn size={17} />
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => abrirEdicion(u)}

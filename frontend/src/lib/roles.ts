@@ -2,6 +2,9 @@ import type { Usuario } from "./api";
 
 export const ADMIN_DEPT = "ADMIN";
 
+/** Panel de administración: directorio de usuarios (inicio tras login admin). */
+export const RUTA_PANEL_ADMIN = "/dashboard/directorio";
+
 export function isAdminDept(departamento: string | null | undefined): boolean {
   return (departamento ?? "").trim().toUpperCase() === ADMIN_DEPT;
 }

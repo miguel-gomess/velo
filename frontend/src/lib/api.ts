@@ -388,7 +388,21 @@ export type Usuario = {
   equipos?: string[];
   puede_usar_kanban?: boolean;
   es_admin_panel?: boolean;
+  es_superadmin?: boolean;
 };
+
+export async function apiResolveAuthUser(email: string): Promise<{
+  userId: string;
+  email: string;
+  name: string | null;
+}> {
+  const url = new URL(apiUrl("/api/admin/resolve-user"));
+  url.searchParams.set("email", email.trim());
+  const res = await fetch(url, { credentials: "include" });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "No se encontró la cuenta de acceso");
+  return data as { userId: string; email: string; name: string | null };
+}
 
 export async function apiGetMe(): Promise<Usuario> {
   const res = await fetch(apiUrl("/api/me"), { credentials: "include" });

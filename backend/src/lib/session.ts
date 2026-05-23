@@ -1,3 +1,4 @@
+import { ensureAdminPluginSchema } from "@/lib/adminPluginSchema";
 import { auth } from "@/lib/auth";
 import { pool } from "@/lib/db";
 
@@ -14,6 +15,7 @@ export type UsuarioSesion = {
 export async function getUsuarioFromRequest(
   request: Request,
 ): Promise<UsuarioSesion | null> {
+  await ensureAdminPluginSchema();
   const session = await auth.api.getSession({ headers: request.headers });
   const email = session?.user?.email?.trim().toLowerCase();
   if (!email) return null;

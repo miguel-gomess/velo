@@ -3,7 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { authClient } from "../lib/authClient";
 import { apiGetMe } from "../lib/api";
 import { parseIncidenciaIdDesdeSearch, rutaIncidenciaParaUsuario } from "../lib/incidenciaEnlace";
-import { isAdminUsuario, puedeUsarWorkspaceKanban } from "../lib/roles";
+import { isAdminUsuario, puedeUsarWorkspaceKanban, RUTA_PANEL_ADMIN } from "../lib/roles";
 
 export function HomeRedirect() {
   const { data: session, isPending } = authClient.useSession();
@@ -21,7 +21,7 @@ export function HomeRedirect() {
           return;
         }
         if (isAdminUsuario(me)) {
-          navigate("/dashboard/incidencias", { replace: true });
+          navigate(RUTA_PANEL_ADMIN, { replace: true });
         } else if (puedeUsarWorkspaceKanban(me)) {
           navigate("/workspace", { replace: true });
         } else {

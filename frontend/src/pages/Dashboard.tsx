@@ -3,6 +3,7 @@ import { authClient } from "../lib/authClient";
 import { useProfile } from "../hooks/useProfile";
 import { ADMIN_DEPT } from "../lib/roles";
 import { AdminShell } from "../components/layout/AdminShell";
+import { VolverMiCuentaButton } from "../components/admin/ImpersonationBanner";
 import { PageLoading } from "../components/layout/PageLoading";
 import { UserAvatar } from "../components/UserAvatar";
 import {
@@ -16,8 +17,8 @@ import {
 } from "lucide-react";
 
 const NAV = [
-  { to: "/dashboard/incidencias", label: "Incidencias", icon: Kanban },
   { to: "/dashboard/directorio", label: "Directorio", icon: Users },
+  { to: "/dashboard/incidencias", label: "Incidencias", icon: Kanban },
   { to: "/dashboard/analisis", label: "Análisis", icon: BarChart3 },
   { to: "/dashboard/config", label: "Configuración", icon: Settings },
 ] as const;
@@ -99,6 +100,7 @@ export function Dashboard() {
             <p className="truncate text-sm font-semibold">{session.user.name}</p>
             <p className="truncate text-xs text-[var(--velo-text-subtle)]">{dept}</p>
           </div>
+          <VolverMiCuentaButton variant="compact" />
           <button
             type="button"
             onClick={() => authClient.signOut()}

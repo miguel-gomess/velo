@@ -1,9 +1,10 @@
 import { NavLink, Navigate, Outlet } from "react-router-dom";
 import { authClient } from "../lib/authClient";
 import { useProfile } from "../hooks/useProfile";
-import { isAdminUsuario, puedeUsarWorkspaceKanban } from "../lib/roles";
+import { isAdminUsuario, puedeUsarWorkspaceKanban, RUTA_PANEL_ADMIN } from "../lib/roles";
 import { labelEquipo } from "../lib/equipos";
 import { AdminShell } from "../components/layout/AdminShell";
+import { VolverMiCuentaButton } from "../components/admin/ImpersonationBanner";
 import { PageLoading } from "../components/layout/PageLoading";
 import { UserAvatar } from "../components/UserAvatar";
 import { ExternalLink, Kanban, LayoutDashboard, LogOut } from "lucide-react";
@@ -36,7 +37,7 @@ export function Workspace() {
   const me = profile.user;
 
   if (isAdminUsuario(me)) {
-    return <Navigate to="/dashboard/incidencias" replace />;
+    return <Navigate to={RUTA_PANEL_ADMIN} replace />;
   }
 
   if (!puedeUsarWorkspaceKanban(me)) {
@@ -80,6 +81,7 @@ export function Workspace() {
               {(me.departamento ?? "").trim() || "Equipo"}
             </p>
           </div>
+          <VolverMiCuentaButton variant="compact" />
           <button
             type="button"
             onClick={() => authClient.signOut()}

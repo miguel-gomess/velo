@@ -64,6 +64,15 @@ async function main() {
       [nombre, email, "ADMIN", true],
     );
 
+    const superRaw = process.env.SUPERADMIN_EMAIL ?? "miguel@velo.com";
+    const superEmails = superRaw
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    if (superEmails.includes(email)) {
+      await pool.query(`UPDATE "user" SET role = 'admin' WHERE LOWER(email) = $1`, [email]);
+    }
+
     console.log(`Admin creado: ${email}`);
     if (passwordGenerada) {
       console.log("───────────────────────────────────────────────");

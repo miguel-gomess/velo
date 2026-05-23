@@ -14,6 +14,7 @@ import { PortalNuevaSolicitudForm } from "../components/portal/PortalNuevaSolici
 import { PortalMisSolicitudesView } from "../components/portal/PortalMisSolicitudesView";
 import { contarPorEstado, incidenciasVisiblesEnPortal, type PortalTabId } from "../components/portal/portalUtils";
 import { AlertCircle, Home, MessageSquare, Plus } from "lucide-react";
+import { ImpersonationBanner } from "../components/admin/ImpersonationBanner";
 
 export function Portal() {
   const { data: session, isPending } = authClient.useSession();
@@ -126,6 +127,7 @@ export function Portal() {
 
   return (
     <div className="portal-shell flex h-svh flex-col overflow-hidden">
+      <ImpersonationBanner />
       <PortalHeader
         nombreUsuario={nombreUsuario}
         me={me}

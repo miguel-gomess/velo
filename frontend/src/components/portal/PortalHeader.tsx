@@ -4,6 +4,7 @@ import { authClient } from "../../lib/authClient";
 import { isAdminUsuario, puedeUsarWorkspaceKanban } from "../../lib/roles";
 import type { Usuario } from "../../lib/api";
 import { NotificacionesCampana } from "../notificaciones/NotificacionesCampana";
+import { VolverMiCuentaButton } from "../admin/ImpersonationBanner";
 import { AppLogo } from "../layout/AppLogo";
 import { UserAvatar } from "../UserAvatar";
 import { saludoSegunHora } from "./portalUtils";
@@ -40,6 +41,7 @@ export function PortalHeader({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
+          <VolverMiCuentaButton variant="compact" />
           {isAdminUsuario(me) && (
             <Link
               to="/dashboard/incidencias"

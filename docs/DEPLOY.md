@@ -59,8 +59,11 @@ cd backend
 # .env con DATABASE_URL de Neon y DATABASE_SSL=true
 npx @better-auth/cli@latest migrate -y
 npm run db:incidencias   # incluye usuarios, incidencias, equipos y extensiones TFG
+npm run db:admin-auth    # columnas plugin Admin + rol Better Auth para superadmin
 npm run seed:admin
 ```
+
+Variable opcional en Vercel: `SUPERADMIN_EMAIL` (por defecto `miguel@velo.com`). Solo ese usuario ve en el directorio la opción «Entrar como otro usuario».
 
 Opcional: `npm run seed:demo` para datos de prueba.
 

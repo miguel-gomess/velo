@@ -49,12 +49,12 @@ function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to="incidencias" replace />} />
+        <Route index element={<Navigate to="directorio" replace />} />
         <Route path="incidencias" element={<IncidenciasPanel />} />
         <Route path="directorio" element={<DirectorioPanel />} />
         <Route path="analisis" element={<PanelAnalisis />} />
         <Route path="config" element={<ConfigPanel />} />
-        <Route path="*" element={<Navigate to="incidencias" replace />} />
+        <Route path="*" element={<Navigate to="directorio" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

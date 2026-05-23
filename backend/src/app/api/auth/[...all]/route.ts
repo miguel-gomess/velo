@@ -1,10 +1,14 @@
 import { toNextJsHandler } from "better-auth/next-js";
+import { ensureAdminPluginSchema } from "@/lib/adminPluginSchema";
 import { auth } from "@/lib/auth";
 import { clientIp, rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 const { GET: betterAuthGet, POST: betterAuthPost } = toNextJsHandler(auth);
 
-export const GET = betterAuthGet;
+export async function GET(request: Request): Promise<Response> {
+  await ensureAdminPluginSchema();
+  return betterAuthGet(request);
+}
 
 /**
  * Limita intentos contra endpoints de autenticación (signin, signup, etc.)
@@ -43,5 +47,6 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  await ensureAdminPluginSchema();
   return betterAuthPost(request);
 }

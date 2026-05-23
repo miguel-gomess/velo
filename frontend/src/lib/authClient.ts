@@ -1,4 +1,5 @@
 import { createAuthClient } from "better-auth/react";
+import { adminClient } from "better-auth/client/plugins";
 
 /** En dev con Vite, deja vacío para usar el mismo origen y el proxy `/api` → Next (puerto 3000). */
 const baseURL =
@@ -7,6 +8,7 @@ const baseURL =
 
 export const authClient = createAuthClient({
   baseURL,
+  plugins: [adminClient()],
   fetchOptions: {
     credentials: "include",
   },
