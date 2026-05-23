@@ -13,12 +13,17 @@ export async function GET() {
   }
 
   try {
-    const uploadDir = getUploadRoot();
-    await mkdir(uploadDir, { recursive: true });
-    await access(uploadDir);
-    checks.uploads = "ok";
+    if (process.env.VERCEL) {
+      await pool.query(`SELECT 1 FROM incidencia_archivos LIMIT 1`);
+      checks.uploads = "db";
+    } else {
+      const uploadDir = getUploadRoot();
+      await mkdir(uploadDir, { recursive: true });
+      await access(uploadDir);
+      checks.uploads = "ok";
+    }
   } catch {
-    checks.uploads = "missing";
+    checks.uploads = process.env.VERCEL ? "db-missing" : "missing";
   }
 
   const ok = checks.database === "ok";

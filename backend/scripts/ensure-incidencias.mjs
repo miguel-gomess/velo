@@ -114,7 +114,24 @@ await pool.query(
   `CREATE INDEX IF NOT EXISTS incidencia_adjuntos_incidencia_idx ON incidencia_adjuntos (incidencia_id, fecha_creacion);`,
 );
 
-console.log("Tablas incidencias, mensajes y adjuntos sincronizadas.");
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS incidencia_archivos (
+    id SERIAL PRIMARY KEY,
+    incidencia_id INTEGER NOT NULL REFERENCES incidencias(id) ON DELETE CASCADE,
+    ruta TEXT NOT NULL,
+    contenido BYTEA NOT NULL,
+    mime_type VARCHAR(80) NOT NULL,
+    tamano_bytes INTEGER NOT NULL,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (incidencia_id, ruta)
+  );
+`);
+
+await pool.query(
+  `CREATE INDEX IF NOT EXISTS incidencia_archivos_incidencia_idx ON incidencia_archivos (incidencia_id);`,
+);
+
+console.log("Tablas incidencias, mensajes, adjuntos y archivos sincronizadas.");
 await pool.end();
 
 const tfgScript = resolve(dirname(fileURLToPath(import.meta.url)), "ensure-tfg.mjs");

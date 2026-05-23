@@ -10,6 +10,7 @@ import {
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { Incidencia, Usuario } from "../../lib/api";
+import { apiAssetUrl } from "../../lib/api";
 import { CopiarEnlaceIncidenciaButton } from "./CopiarEnlaceIncidenciaButton";
 import {
   KANBAN_COLUMNAS,
@@ -78,6 +79,11 @@ function CardFilaPersona({
   );
 }
 
+function primeraImagenDesdeDescripcion(descripcion: string): string | null {
+  const m = /!\[[^\]]*\]\(([^)]+)\)/.exec(descripcion);
+  return m?.[1] ?? null;
+}
+
 function CardLayout({
   inc,
   me,
@@ -97,9 +103,11 @@ function CardLayout({
   readOnly?: boolean;
   mensajesSinLeer?: number;
 }) {
-  const imagenPortada =
+  const imagenPortadaRaw =
     (inc as Incidencia & { imagen_url?: string }).imagen_url ||
-    (inc as Incidencia & { imagenes?: string[] }).imagenes?.[0];
+    (inc as Incidencia & { imagenes?: string[] }).imagenes?.[0] ||
+    primeraImagenDesdeDescripcion(inc.descripcion);
+  const imagenPortada = imagenPortadaRaw ? apiAssetUrl(imagenPortadaRaw) : null;
 
   const fechaCreacion = formatFechaCorta(inc.fecha_creacion);
 

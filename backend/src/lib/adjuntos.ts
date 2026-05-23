@@ -1,10 +1,16 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { pool } from "./db";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
-/** Directorio base de ficheros. En Vercel solo `/tmp` es escribible (efímero). */
+/** En Vercel el disco es efímero; persistimos bytes en PostgreSQL (Neon). */
+function usarAlmacenDb(): boolean {
+  return process.env.UPLOAD_STORAGE === "db" || !!process.env.VERCEL;
+}
+
+/** Directorio base de ficheros en desarrollo local. */
 export function getUploadRoot(): string {
   if (process.env.UPLOAD_DIR) {
     return path.resolve(process.env.UPLOAD_DIR);
@@ -28,6 +34,74 @@ export type ImagenGuardada = {
   tamano_bytes: number;
   nombre_original: string;
 };
+
+function incidenciaIdDesdeRuta(rutaRelativa: string): number {
+  const id = Number(rutaRelativa.split(/[/\\]+/)[0]);
+  if (!Number.isFinite(id) || id < 1) {
+    throw new Error("Ruta inválida");
+  }
+  return id;
+}
+
+async function guardarEnDb(
+  rutaRelativa: string,
+  buffer: Buffer,
+  mime: string,
+): Promise<void> {
+  await asegurarTablaArchivos();
+  const incidenciaId = incidenciaIdDesdeRuta(rutaRelativa);
+  await pool.query(
+    `
+    INSERT INTO incidencia_archivos (incidencia_id, ruta, contenido, mime_type, tamano_bytes)
+    VALUES ($1, $2, $3, $4, $5)
+    ON CONFLICT (incidencia_id, ruta) DO UPDATE SET
+      contenido = EXCLUDED.contenido,
+      mime_type = EXCLUDED.mime_type,
+      tamano_bytes = EXCLUDED.tamano_bytes
+  `,
+    [incidenciaId, rutaRelativa, buffer, mime, buffer.length],
+  );
+}
+
+async function leerDesdeDb(rutaRelativa: string): Promise<Buffer | null> {
+  try {
+    await asegurarTablaArchivos();
+    const incidenciaId = incidenciaIdDesdeRuta(rutaRelativa);
+    const { rows } = await pool.query<{ contenido: Buffer }>(
+      `SELECT contenido FROM incidencia_archivos WHERE incidencia_id = $1 AND ruta = $2`,
+      [incidenciaId, rutaRelativa],
+    );
+    return rows[0]?.contenido ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function borrarEnDb(incidenciaId: number): Promise<void> {
+  await pool.query(`DELETE FROM incidencia_archivos WHERE incidencia_id = $1`, [incidenciaId]);
+}
+
+let tablaArchivosLista: Promise<void> | null = null;
+
+async function asegurarTablaArchivos(): Promise<void> {
+  if (!tablaArchivosLista) {
+    tablaArchivosLista = pool
+      .query(`
+        CREATE TABLE IF NOT EXISTS incidencia_archivos (
+          id SERIAL PRIMARY KEY,
+          incidencia_id INTEGER NOT NULL REFERENCES incidencias(id) ON DELETE CASCADE,
+          ruta TEXT NOT NULL,
+          contenido BYTEA NOT NULL,
+          mime_type VARCHAR(80) NOT NULL,
+          tamano_bytes INTEGER NOT NULL,
+          fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          UNIQUE (incidencia_id, ruta)
+        );
+      `)
+      .then(() => undefined);
+  }
+  await tablaArchivosLista;
+}
 
 /**
  * Resuelve una ruta relativa dentro de UPLOAD_ROOT.
@@ -128,7 +202,15 @@ async function validarYLeer(file: File): Promise<{ buffer: Buffer; mime: string 
   return { buffer, mime: mimeReal };
 }
 
-async function escribirSeguro(rutaRelativa: string, buffer: Buffer): Promise<void> {
+async function escribirSeguro(
+  rutaRelativa: string,
+  buffer: Buffer,
+  mime: string,
+): Promise<void> {
+  if (usarAlmacenDb()) {
+    await guardarEnDb(rutaRelativa, buffer, mime);
+    return;
+  }
   const destino = rutaAbsoluta(rutaRelativa);
   await mkdir(path.dirname(destino), { recursive: true });
   await writeFile(destino, buffer);
@@ -143,7 +225,7 @@ export async function guardarImagenInlineIncidencia(
   const ext = MIME_EXT[mime];
   const nombre = `${randomUUID()}.${ext}`;
   const rutaRelativa = `${incidenciaId}/inline/${nombre}`;
-  await escribirSeguro(rutaRelativa, buffer);
+  await escribirSeguro(rutaRelativa, buffer, mime);
 
   return {
     ruta: rutaRelativa,
@@ -161,7 +243,7 @@ export async function guardarImagenIncidencia(
   const ext = MIME_EXT[mime];
   const nombre = `${randomUUID()}.${ext}`;
   const rutaRelativa = `${incidenciaId}/${nombre}`;
-  await escribirSeguro(rutaRelativa, buffer);
+  await escribirSeguro(rutaRelativa, buffer, mime);
 
   return {
     ruta: rutaRelativa,
@@ -171,16 +253,28 @@ export async function guardarImagenIncidencia(
   };
 }
 
-/** Elimina todos los ficheros físicos asociados a la incidencia (no falla si no existen). */
+/** Elimina ficheros de la incidencia en disco y en BD (no falla si no existen). */
 export async function borrarArchivosIncidencia(incidenciaId: number): Promise<void> {
-  const dir = rutaAbsoluta(String(incidenciaId));
-  await rm(dir, { recursive: true, force: true });
+  await borrarEnDb(incidenciaId);
+  if (!usarAlmacenDb()) {
+    const dir = rutaAbsoluta(String(incidenciaId));
+    await rm(dir, { recursive: true, force: true });
+  }
 }
 
 export async function leerImagen(rutaRelativa: string): Promise<{
   buffer: Buffer;
   mime_type: string;
 }> {
+  const desdeDb = await leerDesdeDb(rutaRelativa);
+  if (desdeDb) {
+    const mimeReal = detectarMimeReal(desdeDb);
+    return {
+      buffer: desdeDb,
+      mime_type: mimeReal ?? "application/octet-stream",
+    };
+  }
+
   const buffer = await readFile(rutaAbsoluta(rutaRelativa));
   const mimeReal = detectarMimeReal(buffer);
   return {
