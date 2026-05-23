@@ -1,4 +1,4 @@
-const MARK_SRC = "/favicon.svg?v=3";
+import { VeloMark } from "./VeloMark";
 
 export function AppLogo({ size = "md" }: { size?: "sm" | "md" }) {
   const mark = size === "sm" ? "size-9" : "size-11";
@@ -6,14 +6,7 @@ export function AppLogo({ size = "md" }: { size?: "sm" | "md" }) {
 
   return (
     <div className="flex items-center gap-3">
-      <img
-        src={MARK_SRC}
-        alt=""
-        width={size === "sm" ? 36 : 44}
-        height={size === "sm" ? 36 : 44}
-        className={`${mark} shrink-0 rounded-lg shadow-sm`}
-        decoding="async"
-      />
+      <VeloMark className={mark} />
       <div>
         <div className={`${title} font-bold leading-none tracking-tight text-[var(--velo-text)]`}>
           Velo
