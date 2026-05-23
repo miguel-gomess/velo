@@ -15,11 +15,22 @@ Sube el proyecto a un repo de GitHub (si aún no está).
 
 ## 3. Proyecto en Vercel
 
-1. [vercel.com](https://vercel.com) → **Add New** → **Project** → importa el repo.
-2. **Settings → General → Root Directory:** escribe **`backend`** y guarda (obligatorio).
-3. **Settings → Build and Deployment:** deja **Install** y **Build** en *Default* (sin override manual). Usa `backend/vercel.json`.
-4. **No** uses `rootDirectory` dentro de `vercel.json` (Vercel lo rechaza). Solo en **Settings → Root Directory** = `backend`.
-5. El deploy debe usar el último commit de `main`.
+Usa **un solo** proyecto conectado al repo `miguelgomes129/velo` (producción: **velo** → `https://velo-two-sable.vercel.app`). No despliegues un proyecto aparte llamado solo «backend» sin el monorepo completo.
+
+### Opción A (recomendada): raíz del repo
+
+1. Importa el repo desde GitHub.
+2. **Settings → General → Root Directory:** déjalo **vacío** (raíz del repositorio).
+3. **Settings → Build and Deployment:** Install y Build en *Default*; usa `vercel.json` de la raíz.
+4. El deploy debe usar el último commit de `main`.
+
+### Opción B: Root Directory = `backend`
+
+1. **Settings → General → Root Directory:** `backend`.
+2. **Settings → Build and Deployment:** activa **«Include files outside of the Root Directory in the Build Step»** (obligatorio). Sin esto, el build solo ve ~94 archivos y falla con `ENOENT .../frontend/package.json`.
+3. Install/Build por defecto; usa `backend/vercel.json`.
+
+**No** pongas `rootDirectory` dentro de `vercel.json` (Vercel lo rechaza). Solo en el dashboard.
 
 ## 4. Variables de entorno
 
@@ -99,6 +110,11 @@ En Vercel → **Domains**, añade tu dominio y actualiza `BETTER_AUTH_URL` (y `A
 
 ## Si el build falla
 
-- Confirma **Root Directory** = raíz del repo.
-- Revisa los logs: fallos habituales = `DATABASE_URL` incorrecta o dependencias (Node 20+).
+| Síntoma en el log | Causa | Solución |
+|-------------------|--------|----------|
+| `Downloading ~94 deployment files` | Solo se sube `backend/`, sin `frontend/` | Opción B: activar *Include files outside…*; o Opción A con Root Directory vacío |
+| `ENOENT .../frontend/package.json` | Mismo problema | Igual que arriba; o usa el proyecto **velo**, no un proyecto suelto «backend» |
+| Deploy en proyecto «backend» vacío | Proyecto mal vinculado o sin Git | Conecta `miguelgomes129/velo` o despliega desde la raíz: `npx vercel deploy --prod` |
+
+- Revisa `DATABASE_URL`, `BETTER_AUTH_URL` y Node 20+.
 - Build local: `npm run build:vercel` desde la raíz del repo.
