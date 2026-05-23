@@ -406,10 +406,6 @@ export function PanelAnalisis() {
                   Portal empleado
                 </a>
               </div>
-              <p className="mt-6 text-[11px] text-[var(--velo-text-subtle)]">
-                Desarrollo: <code className="rounded bg-slate-100 px-1.5 py-0.5">npm run seed:demo</code> en{" "}
-                <code className="rounded bg-slate-100 px-1.5 py-0.5">backend/</code>
-              </p>
             </section>
           ) : null}
 
