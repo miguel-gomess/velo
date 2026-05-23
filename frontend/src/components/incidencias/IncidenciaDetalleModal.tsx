@@ -8,6 +8,7 @@ import {
   apiGetIncidencia,
   apiGetIncidenciaAdjuntos,
   apiGetIncidenciaMensajes,
+  apiGetIncidenciaVista,
   apiGetUsuarios,
   apiMarcarIncidenciaLeida,
   apiSubirIncidenciaAdjunto,
@@ -74,6 +75,8 @@ import { TiempoRelativo } from "../TiempoRelativo";
 
 type Props = {
   incidenciaId: number;
+  /** Datos ya cargados en el tablero/lista: muestra el modal al instante. */
+  initialIncidencia?: Incidencia | null;
   me: Usuario;
   esAdmin: boolean;
   puedeGestionarEstado?: boolean;
@@ -106,8 +109,105 @@ function StatusLozenge({ estado }: { estado: string }) {
   );
 }
 
+function incidenciaComoDetalle(inc: Incidencia): IncidenciaDetalle {
+  return {
+    ...inc,
+    solicitante_nombre: inc.solicitante_nombre ?? "—",
+    solicitante_departamento: inc.solicitante_departamento ?? null,
+    asignado_nombre: inc.asignado_nombre ?? null,
+  };
+}
+
+function ActividadSkeleton() {
+  return (
+    <div className="mt-4 space-y-4" aria-hidden>
+      {[0, 1].map((i) => (
+        <div key={i} className="flex gap-3">
+          <div className="issue-modal-skeleton-pill size-9 shrink-0" />
+          <div className="min-w-0 flex-1 space-y-2 pt-0.5">
+            <div className="issue-modal-skeleton-bar h-3 w-36" />
+            <div className="issue-modal-skeleton-bar h-3 w-full" />
+            <div className="issue-modal-skeleton-bar h-3 w-[80%]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function IncidenciaDetalleSkeleton() {
+  return (
+    <div
+      className="issue-modal-loading grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_18rem]"
+      aria-busy="true"
+      aria-label="Cargando incidencia"
+    >
+      <main className="min-h-0 overflow-hidden px-4 py-5 sm:px-8 sm:py-6">
+        <div className="issue-modal-skeleton-bar h-7 w-[min(100%,28rem)] sm:h-8" />
+        <div className="issue-modal-skeleton-bar mt-2 h-5 w-20" />
+
+        <div className="mt-8">
+          <div className="issue-modal-skeleton-bar h-3 w-24" />
+          <div className="mt-3 space-y-2.5">
+            <div className="issue-modal-skeleton-bar h-3 w-full" />
+            <div className="issue-modal-skeleton-bar h-3 w-full" />
+            <div className="issue-modal-skeleton-bar h-3 w-[92%]" />
+            <div className="issue-modal-skeleton-bar h-3 w-[68%]" />
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <div className="issue-modal-skeleton-bar h-3 w-32" />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <div className="issue-modal-skeleton-thumb size-20" />
+            <div className="issue-modal-skeleton-thumb size-20" />
+            <div className="issue-modal-skeleton-thumb size-20" />
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <div className="flex gap-4 border-b border-[var(--velo-border)] pb-2">
+            <div className="issue-modal-skeleton-bar h-3 w-16" />
+            <div className="issue-modal-skeleton-bar h-3 w-20 opacity-60" />
+          </div>
+          <div className="mt-4 space-y-4">
+            {[0, 1].map((i) => (
+              <div key={i} className="flex gap-3">
+                <div className="issue-modal-skeleton-pill size-9 shrink-0" />
+                <div className="min-w-0 flex-1 space-y-2 pt-0.5">
+                  <div className="issue-modal-skeleton-bar h-3 w-36" />
+                  <div className="issue-modal-skeleton-bar h-3 w-full" />
+                  <div className="issue-modal-skeleton-bar h-3 w-[80%]" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="issue-modal-loading-status">
+          <Loader2 size={14} className="animate-spin" aria-hidden />
+          Cargando incidencia…
+        </p>
+      </main>
+
+      <aside className="hidden min-h-0 border-t border-[var(--velo-border)] bg-[var(--velo-bg)]/40 px-4 py-5 lg:block lg:border-l lg:border-t-0 lg:px-5">
+        <div className="issue-modal-skeleton-bar h-3 w-20" />
+        <div className="mt-4 space-y-5">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="space-y-2">
+              <div className="issue-modal-skeleton-bar h-2.5 w-24 opacity-70" />
+              <div className="issue-modal-skeleton-pill h-7 w-28" />
+            </div>
+          ))}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
 export function IncidenciaDetalleModal({
   incidenciaId,
+  initialIncidencia = null,
   me,
   esAdmin,
   puedeGestionarEstado,
@@ -119,11 +219,14 @@ export function IncidenciaDetalleModal({
 }: Props) {
   const gestionarEstado = puedeGestionarEstado ?? esAdmin;
   const gestionarAsignacion = puedeGestionarAsignacion ?? esAdmin;
-  const [detalle, setDetalle] = useState<IncidenciaDetalle | null>(null);
+  const [detalle, setDetalle] = useState<IncidenciaDetalle | null>(() =>
+    initialIncidencia ? incidenciaComoDetalle(initialIncidencia) : null,
+  );
   const [mensajes, setMensajes] = useState<IncidenciaMensaje[]>([]);
   const [adjuntos, setAdjuntos] = useState<IncidenciaAdjunto[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialIncidencia);
+  const [loadingActividad, setLoadingActividad] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -165,29 +268,51 @@ export function IncidenciaDetalleModal({
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    Promise.all([
-      apiGetIncidencia(incidenciaId),
-      apiGetIncidenciaMensajes(incidenciaId),
-      apiGetIncidenciaAdjuntos(incidenciaId),
-      gestionarAsignacion ? apiGetUsuarios("") : Promise.resolve({ items: [] }),
-    ])
-      .then(([inc, msgs, adj, users]) => {
+    if (initialIncidencia) {
+      setDetalle(incidenciaComoDetalle(initialIncidencia));
+      setLoading(false);
+    } else {
+      setLoading(true);
+      setDetalle(null);
+    }
+    setLoadingActividad(true);
+    setError(null);
+
+    void apiGetIncidenciaVista(incidenciaId)
+      .then((vista) => {
         if (cancelled) return;
-        setDetalle(inc.item);
-        setMensajes(msgs.items);
-        setPuedeComentariosInternos(msgs.puede_comentarios_internos);
-        setAdjuntos(adj.items);
-        setUsuarios(users.items);
-        const ultimo = msgs.items[msgs.items.length - 1];
+        setDetalle(vista.item);
+        setMensajes(vista.mensajes.items);
+        setPuedeComentariosInternos(vista.mensajes.puede_comentarios_internos);
+        setAdjuntos(vista.adjuntos.items);
+        const ultimo = vista.mensajes.items[vista.mensajes.items.length - 1];
         void apiMarcarIncidenciaLeida(incidenciaId, ultimo?.id ?? null).catch(() => {});
       })
       .catch(() => setError("Error al sincronizar datos"))
-      .finally(() => !cancelled && setLoading(false));
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+          setLoadingActividad(false);
+        }
+      });
+
     return () => {
       cancelled = true;
     };
-  }, [incidenciaId, gestionarAsignacion]);
+  }, [incidenciaId]);
+
+  useEffect(() => {
+    if (!gestionarAsignacion) return;
+    let cancelled = false;
+    void apiGetUsuarios("")
+      .then((r) => {
+        if (!cancelled) setUsuarios(r.items);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [gestionarAsignacion, incidenciaId]);
 
   const refrescarActividadModal = useCallback(async () => {
     await Promise.allSettled([
@@ -198,7 +323,7 @@ export function IncidenciaDetalleModal({
     setHistorialRefresh((n) => n + 1);
   }, [cargarMensajes, cargarAdjuntos, incidenciaId]);
 
-  useVisibilityPolling(refrescarActividadModal, 3000);
+  useVisibilityPolling(refrescarActividadModal, 5000, { enabled: !loadingActividad });
 
   useEffect(() => {
     setEditandoDescripcion(false);
@@ -465,7 +590,7 @@ export function IncidenciaDetalleModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="issue-title"
-        className="velo-modal-dialog relative flex w-full max-w-6xl flex-col overflow-hidden border border-[var(--velo-border)] bg-[var(--velo-surface)] shadow-[var(--velo-shadow-md)] sm:rounded-xl"
+        className={`velo-modal-dialog relative flex w-full max-w-6xl flex-col overflow-hidden border border-[var(--velo-border)] bg-[var(--velo-surface)] shadow-[var(--velo-shadow-md)] sm:rounded-xl${loading ? " velo-modal-dialog--loading" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Barra superior estilo Jira */}
@@ -561,10 +686,7 @@ export function IncidenciaDetalleModal({
         )}
 
         {loading ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-[var(--velo-text-muted)]">
-            <Loader2 className="animate-spin text-[var(--velo-brand)]" size={28} />
-            <p className="text-sm font-medium">Cargando incidencia…</p>
-          </div>
+          <IncidenciaDetalleSkeleton />
         ) : detalle ? (
           <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-stretch">
             {/* Columna principal */}
@@ -666,7 +788,12 @@ export function IncidenciaDetalleModal({
                     )}
                   </div>
 
-                  {adjuntos.length === 0 ? (
+                  {loadingActividad ? (
+                    <div className="mt-3 flex flex-wrap gap-2" aria-hidden>
+                      <div className="issue-modal-skeleton-thumb size-20" />
+                      <div className="issue-modal-skeleton-thumb size-20" />
+                    </div>
+                  ) : adjuntos.length === 0 ? (
                     <p className="mt-3 rounded-md border border-dashed border-[var(--velo-border)] bg-[var(--velo-bg)]/40 px-4 py-6 text-center text-xs text-[var(--velo-text-muted)]">
                       Arrastra imágenes aquí o usa «Adjuntar» para añadir evidencias.
                     </p>
@@ -729,7 +856,9 @@ export function IncidenciaDetalleModal({
                     ) : (
                       <>
                         <div ref={chatScrollRef} className="issue-modal-chat-thread">
-                          {mensajes.length === 0 ? (
+                          {loadingActividad ? (
+                            <ActividadSkeleton />
+                          ) : mensajes.length === 0 ? (
                             <div className="issue-chat-empty">
                               <p className="issue-chat-empty__title">Sin comentarios aún</p>
                               <p className="issue-chat-empty__hint">

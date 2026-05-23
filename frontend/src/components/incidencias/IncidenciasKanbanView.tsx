@@ -228,9 +228,10 @@ export function IncidenciasKanbanView({
         />
       )}
 
-      {modalId !== null && (
+        {modalId !== null && (
         <IncidenciaDetalleModal
           incidenciaId={modalId}
+          initialIncidencia={items.find((i) => i.id === modalId) ?? null}
           me={me}
           esAdmin={esAdmin}
           puedeGestionarEstado={puedeGestionarEstado}

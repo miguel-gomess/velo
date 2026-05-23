@@ -164,6 +164,59 @@ body {
   }
 }
 
+.velo-modal-dialog--loading {
+  min-height: 100dvh;
+}
+
+@media (min-width: 640px) {
+  .velo-modal-dialog--loading {
+    min-height: min(72vh, 640px);
+  }
+}
+
+.issue-modal-loading {
+  animation: portal-fade-up 0.3s ease-out both;
+}
+
+.issue-modal-skeleton-bar {
+  border-radius: 0.5rem;
+  background: linear-gradient(90deg, #ebecf0 25%, #f4f5f7 50%, #ebecf0 75%);
+  background-size: 200% 100%;
+  animation: kanban-shimmer 1.2s ease-in-out infinite;
+}
+
+.issue-modal-skeleton-pill {
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #ebecf0 25%, #f4f5f7 50%, #ebecf0 75%);
+  background-size: 200% 100%;
+  animation: kanban-shimmer 1.2s ease-in-out infinite;
+}
+
+.issue-modal-skeleton-thumb {
+  border-radius: 0.5rem;
+  background: linear-gradient(90deg, #ebecf0 25%, #f4f5f7 50%, #ebecf0 75%);
+  background-size: 200% 100%;
+  animation: kanban-shimmer 1.2s ease-in-out infinite;
+}
+
+.issue-modal-loading-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 9999px;
+  border: 1px solid var(--velo-border);
+  background: var(--velo-bg);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--velo-text-muted);
+}
+
+.issue-modal-loading-status svg {
+  color: var(--velo-brand);
+}
+
 /* Inicio del portal: cabe en viewport sin scroll (lg+) */
 .portal-inicio-fit {
   height: 100%;

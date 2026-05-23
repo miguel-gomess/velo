@@ -126,6 +126,20 @@ export async function apiGetIncidencia(id: number): Promise<{ item: IncidenciaDe
   return data as { item: IncidenciaDetalle };
 }
 
+export type IncidenciaVista = {
+  item: IncidenciaDetalle;
+  mensajes: { items: IncidenciaMensaje[]; puede_comentarios_internos: boolean };
+  adjuntos: { items: IncidenciaAdjunto[] };
+};
+
+/** Incidencia + mensajes + adjuntos en una sola petición. */
+export async function apiGetIncidenciaVista(id: number): Promise<IncidenciaVista> {
+  const res = await fetch(apiUrl(`/api/incidencias/${id}/vista`), { credentials: "include" });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "No se pudo cargar la incidencia");
+  return data as IncidenciaVista;
+}
+
 export async function apiGetIncidenciaMensajes(
   incidenciaId: number,
 ): Promise<{ items: IncidenciaMensaje[]; puede_comentarios_internos: boolean }> {
@@ -413,12 +427,31 @@ export async function apiGetMe(): Promise<Usuario> {
   return data as Usuario;
 }
 
+let usuariosCache: { items: Usuario[]; fetchedAt: number } | null = null;
+const USUARIOS_CACHE_MS = 60_000;
+
 export async function apiGetUsuarios(q: string): Promise<{ items: Usuario[] }> {
+  const trimmed = q.trim();
+  if (
+    !trimmed &&
+    usuariosCache &&
+    Date.now() - usuariosCache.fetchedAt < USUARIOS_CACHE_MS
+  ) {
+    return { items: usuariosCache.items };
+  }
   const url = new URL(apiUrl("/api/users"));
-  if (q.trim()) url.searchParams.set("q", q.trim());
+  if (trimmed) url.searchParams.set("q", trimmed);
   const res = await fetch(url, { credentials: "include" });
   if (!res.ok) throw new Error("No se pudieron cargar usuarios");
-  return res.json();
+  const data = (await res.json()) as { items: Usuario[] };
+  if (!trimmed) {
+    usuariosCache = { items: data.items, fetchedAt: Date.now() };
+  }
+  return data;
+}
+
+export function invalidarCacheUsuarios(): void {
+  usuariosCache = null;
 }
 
 export async function apiCreateUsuario(input: {
@@ -436,6 +469,7 @@ export async function apiCreateUsuario(input: {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || data.message || "Error al crear usuario");
+  invalidarCacheUsuarios();
   return data;
 }
 
@@ -457,6 +491,7 @@ export async function apiUpdateUsuario(
   
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "No se pudo actualizar");
+  invalidarCacheUsuarios();
   return data;
 }
 
@@ -467,5 +502,6 @@ export async function apiDeleteUsuario(id: number): Promise<{ ok: true }> {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "No se pudo eliminar");
+  invalidarCacheUsuarios();
   return { ok: true };
 }
