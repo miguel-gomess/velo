@@ -144,8 +144,10 @@ export function Portal() {
         <PortalNavMobile items={navItems} tab={tab} onTab={setTab} />
 
         <main
-          className={`min-h-0 min-w-0 flex-1 overflow-y-auto ${
-            tab === "inicio" ? "lg:overflow-hidden" : ""
+          className={`min-h-0 min-w-0 flex-1 ${
+            tab === "inicio" || tab === "seguimiento"
+              ? "flex flex-col overflow-hidden"
+              : "overflow-y-auto"
           }`}
         >
           {tab === "inicio" && (

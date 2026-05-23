@@ -37,6 +37,8 @@ type Props = {
   onError?: (msg: string | null) => void;
   imagenesPendientes?: ImagenPendiente[];
   onImagenesPendientesChange?: (items: ImagenPendiente[]) => void;
+  /** Texto bajo el editor (portal, etc.). */
+  tipPegado?: string;
 };
 
 let bloqueSeq = 0;
@@ -123,11 +125,12 @@ export function DescripcionEditor({
   onChange,
   incidenciaId,
   disabled,
-  placeholder = "Añade una descripción más detallada…",
+  placeholder = "Escribe aquí los detalles…",
   className = "",
   onError,
   imagenesPendientes: _pendientesProp,
   onImagenesPendientesChange,
+  tipPegado = "Puedes pegar una captura con Ctrl+V; se insertará donde estés escribiendo.",
 }: Props) {
   const editorId = useId();
   const [bloques, setBloques] = useState<Bloque[]>(() => descripcionABloques(value));
@@ -342,7 +345,7 @@ export function DescripcionEditor({
                   placeholder={
                     index === 0 && esUnico
                       ? placeholder
-                      : "Continúa escribiendo debajo de la imagen…"
+                      : "Sigue escribiendo debajo de la imagen…"
                   }
                   className="jira-description-edit__textarea"
                 />
@@ -367,9 +370,7 @@ export function DescripcionEditor({
           })}
         </div>
 
-        <p className="jira-description-edit__tip">
-          Pega capturas con Ctrl+V; se insertan debajo del párrafo donde escribes.
-        </p>
+        <p className="jira-description-edit__tip">{tipPegado}</p>
       </div>
 
       {lightboxUrl && (

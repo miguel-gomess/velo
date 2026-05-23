@@ -59,8 +59,14 @@ export function PortalNuevaSolicitudForm({
     e.preventDefault();
     const titulo = asunto.trim();
     const cuerpo = descripcion.trim();
-    if (!titulo || (!cuerpo && imagenesPendientes.length === 0)) {
-      setFormError("Indica un asunto y describe tu solicitud.");
+    if (!titulo) {
+      setFormError("Escribe un asunto breve: una línea que resuma qué necesitas.");
+      return;
+    }
+    if (!cuerpo && imagenesPendientes.length === 0) {
+      setFormError(
+        "Cuéntanos el problema en la descripción. Si solo envías una captura, añade al menos una frase de contexto.",
+      );
       return;
     }
 
@@ -90,11 +96,15 @@ export function PortalNuevaSolicitudForm({
       setDescripcion("");
       setPrioridad("media");
       setImagenesPendientes([]);
-      setExito(`Solicitud VEL-${item.id} registrada. El equipo ${categoria.equipoGestion} la revisará pronto.`);
+      setExito(
+        `Listo: tu solicitud VEL-${item.id} ya está registrada. El equipo de ${categoria.equipoGestion} la revisará y podrás seguirla en «Mis solicitudes».`,
+      );
       await onReload();
       onCreada(item.id);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Error al enviar");
+      setFormError(
+        err instanceof Error ? err.message : "No se pudo enviar. Comprueba tu conexión e inténtalo de nuevo.",
+      );
     } finally {
       setCreating(false);
     }
@@ -103,7 +113,7 @@ export function PortalNuevaSolicitudForm({
   return (
     <div className="portal-animate-in portal-stagger-2 grid gap-6 xl:grid-cols-[1fr_1.1fr]">
       <PanelIntro categoria={categoria} />
-      <form onSubmit={onSubmit} className="portal-card p-6 sm:p-8">
+      <form onSubmit={onSubmit} noValidate className="portal-card p-6 sm:p-8">
         <fieldset>
           <legend className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-[var(--velo-text-subtle)]">
             ¿De qué se trata?
@@ -160,28 +170,39 @@ export function PortalNuevaSolicitudForm({
 
         <div className="mt-8 space-y-5">
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-[var(--velo-text-subtle)]">
+            <label
+              htmlFor="portal-solicitud-asunto"
+              className="mb-2 block text-xs font-bold uppercase tracking-wide text-[var(--velo-text-subtle)]"
+            >
               Asunto
             </label>
+            <p className="mb-2 text-[11px] text-[var(--velo-text-muted)]">
+              Una línea que resuma tu petición.
+            </p>
             <input
+              id="portal-solicitud-asunto"
               value={asunto}
               onChange={(e) => setAsunto(e.target.value)}
-              placeholder="Ej. Solicitud de monitor para teletrabajo"
+              placeholder="Por ejemplo: necesito un monitor para teletrabajo"
+              autoComplete="off"
               className="w-full rounded-xl border-2 border-[var(--velo-border)] bg-slate-50/50 px-4 py-3 text-sm font-medium transition focus:border-[var(--velo-brand)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--velo-brand-muted)]"
-              required
             />
           </div>
           <div>
             <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-[var(--velo-text-subtle)]">
               Descripción
             </label>
+            <p className="mb-2 text-[11px] text-[var(--velo-text-muted)]">
+              Cuanto más claro sea, antes podremos ayudarte.
+            </p>
             <DescripcionEditor
               value={descripcion}
               onChange={setDescripcion}
               imagenesPendientes={imagenesPendientes}
               onImagenesPendientesChange={setImagenesPendientes}
               onError={(msg) => setFormError(msg)}
-              placeholder="Describe con detalle: qué ocurre, desde cuándo, ubicación, urgencia…"
+              placeholder="Qué ocurre, desde cuándo, dónde estás y si es urgente…"
+              tipPegado="Puedes pegar una captura con Ctrl+V; aparecerá donde tengas el cursor."
             />
           </div>
           <div>
@@ -198,7 +219,8 @@ export function PortalNuevaSolicitudForm({
               disabled={creating}
             />
             <p className="mt-1.5 text-[11px] text-[var(--velo-text-subtle)]">
-              Si no la cambias, se aplicará prioridad <strong className="font-semibold">media</strong>.
+              Si no eliges otra, usamos prioridad <strong className="font-semibold">media</strong>. Márcala
+              alta solo cuando no pueda esperar.
             </p>
           </div>
         </div>
@@ -222,10 +244,13 @@ export function PortalNuevaSolicitudForm({
           className="group mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--velo-brand)] to-[#0747a6] py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:shadow-xl hover:shadow-blue-500/30 disabled:opacity-60"
         >
           {creating ? (
-            <Loader2 className="animate-spin" size={20} />
+            <>
+              <Loader2 className="animate-spin" size={20} />
+              Enviando…
+            </>
           ) : (
             <>
-              Enviar solicitud
+              Enviar al equipo
               <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" />
             </>
           )}
@@ -251,14 +276,14 @@ function PanelIntro({ categoria }: { categoria: PortalCategoria }) {
           Cuéntanos qué necesitas
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-[var(--velo-text-muted)]">
-          Elige el área, describe el problema y el equipo adecuado recibirá tu solicitud. Podrás seguir el
-          estado y chatear desde «Mis solicitudes».
+          Elige el área, explica qué necesitas y la derivamos al equipo correcto. Después podrás ver el
+          estado y escribir con ellos desde «Mis solicitudes».
         </p>
         <ol className="mt-8 space-y-4">
           {[
-            "Selecciona el área (IT, RRHH, Finanzas…)",
-            "Resume el asunto en una línea",
-            "Añade detalles para agilizar la resolución",
+            "Elige el área (informática, RRHH, finanzas…)",
+            "Pon un asunto corto y claro",
+            "Describe el problema; si ayuda, pega una captura",
           ].map((paso, i) => (
             <li key={paso} className="flex gap-3 text-sm">
               <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--velo-brand)] text-xs font-bold text-white">

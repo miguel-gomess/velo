@@ -64,11 +64,23 @@ export function PortalMisSolicitudesView({
   );
 
   const mostrarDetalleMovil = seleccionadaId != null;
+  const sinSolicitudes = !listLoading && misSolicitudes.length === 0;
+
+  if (sinSolicitudes && seleccionadaId == null) {
+    return (
+      <div className="portal-animate-in portal-stagger-2 flex min-h-0 flex-1 flex-col">
+        <div className="portal-card flex min-h-0 flex-1 flex-col">
+          <EmptySeguimiento onNueva={onNueva} variant="full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="portal-animate-in portal-stagger-2 grid min-h-0 gap-4 lg:min-h-[min(640px,calc(100dvh-12rem))] lg:grid-cols-[minmax(260px,360px)_minmax(0,1fr)]">
+    <div className="portal-animate-in portal-stagger-2 flex min-h-0 flex-1 flex-col">
+      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(280px,380px)_minmax(0,1fr)]">
       <aside
-        className={`portal-card flex flex-col overflow-hidden ${
+        className={`portal-card flex min-h-0 flex-col overflow-hidden ${
           mostrarDetalleMovil ? "hidden lg:flex" : "flex"
         }`}
       >
@@ -229,7 +241,7 @@ export function PortalMisSolicitudesView({
       </aside>
 
       <section
-        className={`portal-card flex min-h-0 flex-col overflow-hidden lg:min-h-[480px] ${
+        className={`portal-card flex min-h-0 flex-1 flex-col overflow-hidden ${
           mostrarDetalleMovil ? "flex" : "hidden lg:flex"
         }`}
       >
@@ -243,27 +255,51 @@ export function PortalMisSolicitudesView({
             />
           </div>
         ) : (
-          <EmptySeguimiento onNueva={onNueva} />
+          <EmptySeguimiento onNueva={onNueva} variant="pane" />
         )}
       </section>
+      </div>
     </div>
   );
 }
 
-function EmptySeguimiento({ onNueva }: { onNueva: () => void }) {
+function EmptySeguimiento({
+  onNueva,
+  variant = "pane",
+}: {
+  onNueva: () => void;
+  variant?: "pane" | "full";
+}) {
+  const full = variant === "full";
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-8 py-16 text-center">
-      <div className="mb-6 flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--velo-brand-muted)] to-white shadow-inner">
-        <MessageSquare className="text-[var(--velo-brand)]" size={36} />
+    <div
+      className={`flex min-h-0 flex-1 flex-col items-center justify-center text-center ${
+        full ? "bg-gradient-to-b from-slate-50/90 to-white px-6 py-12 sm:px-12" : "px-8 py-10"
+      }`}
+    >
+      <div
+        className={`mb-6 flex items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--velo-brand-muted)] to-white shadow-inner ${
+          full ? "size-24" : "size-20"
+        }`}
+      >
+        <MessageSquare className="text-[var(--velo-brand)]" size={full ? 44 : 36} />
       </div>
-      <h3 className="text-lg font-bold text-[var(--velo-text)]">Selecciona una solicitud</h3>
-      <p className="mt-2 max-w-sm text-sm leading-relaxed text-[var(--velo-text-muted)]">
-        Aquí verás el estado en tiempo real, plazos y podrás conversar con el equipo responsable.
+      <h3 className={`font-bold text-[var(--velo-text)] ${full ? "text-xl sm:text-2xl" : "text-lg"}`}>
+        {full ? "Aún no tienes solicitudes" : "Selecciona una solicitud"}
+      </h3>
+      <p
+        className={`mt-2 leading-relaxed text-[var(--velo-text-muted)] ${
+          full ? "max-w-md text-sm sm:text-base" : "max-w-sm text-sm"
+        }`}
+      >
+        {full
+          ? "Crea la primera y podrás seguirla desde aquí: estado, plazos y conversación con el equipo."
+          : "Aquí verás el estado, los plazos y podrás escribir con el equipo responsable."}
       </p>
       <button
         type="button"
         onClick={onNueva}
-        className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[var(--velo-brand)] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-500/20"
+        className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[var(--velo-brand)] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition hover:shadow-xl"
       >
         <Plus size={16} />
         Nueva solicitud
