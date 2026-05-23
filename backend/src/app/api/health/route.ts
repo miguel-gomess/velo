@@ -1,6 +1,6 @@
 import { pool } from "@/lib/db";
-import { access } from "node:fs/promises";
-import path from "node:path";
+import { getUploadRoot } from "@/lib/adjuntos";
+import { access, mkdir } from "node:fs/promises";
 
 export async function GET() {
   const checks: Record<string, string> = { api: "ok" };
@@ -13,7 +13,8 @@ export async function GET() {
   }
 
   try {
-    const uploadDir = path.join(process.cwd(), "uploads", "incidencias");
+    const uploadDir = getUploadRoot();
+    await mkdir(uploadDir, { recursive: true });
     await access(uploadDir);
     checks.uploads = "ok";
   } catch {

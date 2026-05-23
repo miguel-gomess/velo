@@ -2,8 +2,18 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-const UPLOAD_ROOT = path.resolve(process.cwd(), "uploads", "incidencias");
 const MAX_BYTES = 5 * 1024 * 1024;
+
+/** Directorio base de ficheros. En Vercel solo `/tmp` es escribible (efímero). */
+export function getUploadRoot(): string {
+  if (process.env.UPLOAD_DIR) {
+    return path.resolve(process.env.UPLOAD_DIR);
+  }
+  if (process.env.VERCEL) {
+    return path.join("/tmp", "velo", "uploads", "incidencias");
+  }
+  return path.resolve(process.cwd(), "uploads", "incidencias");
+}
 
 const MIME_EXT: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -51,6 +61,7 @@ export function rutaAbsoluta(rutaRelativa: string): string {
     }
   }
 
+  const UPLOAD_ROOT = getUploadRoot();
   const resolved = path.resolve(UPLOAD_ROOT, ...segments);
   if (resolved !== UPLOAD_ROOT && !resolved.startsWith(UPLOAD_ROOT + path.sep)) {
     throw new Error("Ruta fuera del directorio de uploads");
