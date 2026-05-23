@@ -6,17 +6,15 @@ export function VeloMark({ className = "size-11" }: { className?: string }) {
       className={`shrink-0 rounded-lg shadow-sm ${className}`}
       aria-hidden
     >
-      <rect width="32" height="32" rx="6" className="fill-[var(--velo-brand)]" />
+      <rect width="32" height="32" rx="6" fill="var(--velo-brand, #2563eb)" />
       <text
         x="16"
         y="22"
         textAnchor="middle"
-        className="fill-white"
-        style={{
-          fontFamily: "Inter, system-ui, -apple-system, Segoe UI, sans-serif",
-          fontSize: "18px",
-          fontWeight: 700,
-        }}
+        fill="#ffffff"
+        fontFamily="Inter, system-ui, -apple-system, Segoe UI, sans-serif"
+        fontSize="18"
+        fontWeight="700"
       >
         V
       </text>
