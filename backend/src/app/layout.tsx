@@ -4,7 +4,10 @@ export const metadata: Metadata = {
   title: "Velo — Gestión de incidencias",
   description: "Gestión de incidencias internas",
   icons: {
-    icon: [{ url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" }],
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },
+    ],
     apple: "/apple-touch-icon.png",
   },
 };

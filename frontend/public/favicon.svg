@@ -1,16 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Velo">
-  <defs>
-    <linearGradient id="velo-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0052cc" />
-      <stop offset="100%" stop-color="#0747a6" />
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="8" fill="url(#velo-bg)" />
+  <!-- Mismo estilo que AppLogo (Login): bg --velo-brand #2563eb, rounded-lg, V bold blanca -->
+  <rect width="32" height="32" rx="6" fill="#2563eb" />
   <text
     x="16"
-    y="22.5"
-    font-family="Segoe UI, system-ui, -apple-system, sans-serif"
-    font-size="19"
+    y="22"
+    font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif"
+    font-size="18"
     font-weight="700"
     fill="#ffffff"
     text-anchor="middle"

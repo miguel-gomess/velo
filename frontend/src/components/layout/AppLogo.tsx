@@ -1,14 +1,19 @@
+const MARK_SRC = "/favicon.svg?v=3";
+
 export function AppLogo({ size = "md" }: { size?: "sm" | "md" }) {
-  const box = size === "sm" ? "size-9 text-sm" : "size-11 text-lg";
+  const mark = size === "sm" ? "size-9" : "size-11";
   const title = size === "sm" ? "text-lg" : "text-xl";
 
   return (
     <div className="flex items-center gap-3">
-      <div
-        className={`flex ${box} items-center justify-center rounded-lg bg-[var(--velo-brand)] font-bold text-white shadow-sm`}
-      >
-        V
-      </div>
+      <img
+        src={MARK_SRC}
+        alt=""
+        width={size === "sm" ? 36 : 44}
+        height={size === "sm" ? 36 : 44}
+        className={`${mark} shrink-0 rounded-lg shadow-sm`}
+        decoding="async"
+      />
       <div>
         <div className={`${title} font-bold leading-none tracking-tight text-[var(--velo-text)]`}>
           Velo
