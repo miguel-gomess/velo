@@ -2241,6 +2241,29 @@ body {
   border-color: #2563eb;
 }
 
+.inc-cal-event--done {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.inc-cal-event--done .inc-cal-event-id {
+  color: #15803d;
+  font-weight: 800;
+}
+
+.inc-cal-event--done .inc-cal-event-title {
+  color: #166534;
+}
+
+.inc-cal-event--done .inc-cal-event-accent {
+  width: 4px;
+}
+
+.inc-cal-leyenda-dot.inc-cal-event--done {
+  background: #22c55e;
+  border-color: #16a34a;
+}
+
 .inc-cal-event--warning {
   background: #fefce8;
   border-color: #eab308;

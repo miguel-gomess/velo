@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Incidencia } from "../../lib/api";
 import { parseFechaApi } from "../../lib/fechas";
-import { temaPorEstado } from "../../lib/incidencias";
+import { normalizarEstado, temaPorEstado } from "../../lib/incidencias";
 import { slaEstado } from "../portal/portalUtils";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
@@ -51,6 +51,20 @@ function accentSla(sla: ReturnType<typeof slaEstado>, fallback: string): string 
   if (sla === "warning") return "#ca8a04";
   if (sla === "ok") return "#2563eb";
   return fallback;
+}
+
+function estaCerrada(estado: string): boolean {
+  return normalizarEstado(estado) === "cerrada";
+}
+
+function claseCalEvento(inc: Incidencia): string {
+  if (estaCerrada(inc.estado)) return "inc-cal-event--done";
+  return claseSlaChip(slaEstado(inc.fecha_limite, inc.estado));
+}
+
+function accentCalEvento(inc: Incidencia, fallback: string): string {
+  if (estaCerrada(inc.estado)) return "#16a34a";
+  return accentSla(slaEstado(inc.fecha_limite, inc.estado), fallback);
 }
 
 export function IncidenciasCalendarioView({ items, loading, onOpen }: Props) {
@@ -173,6 +187,9 @@ export function IncidenciasCalendarioView({ items, loading, onOpen }: Props) {
       <div className="inc-cal-body min-h-0 flex-1 overflow-auto p-3 sm:p-4">
         <div className="inc-cal-leyenda mb-3 flex flex-wrap gap-3 text-[10px] font-medium text-[var(--velo-text-muted)]">
           <span className="inc-cal-leyenda-item">
+            <span className="inc-cal-leyenda-dot inc-cal-event--done" /> Hechas
+          </span>
+          <span className="inc-cal-leyenda-item">
             <span className="inc-cal-leyenda-dot inc-cal-event--ok" /> En plazo
           </span>
           <span className="inc-cal-leyenda-item">
@@ -214,19 +231,18 @@ export function IncidenciasCalendarioView({ items, loading, onOpen }: Props) {
 
                 <ul className="inc-cal-events">
                   {visibles.map((inc) => {
-                    const sla = slaEstado(inc.fecha_limite, inc.estado);
                     const tema = temaPorEstado(inc.estado);
                     return (
                       <li key={inc.id}>
                         <button
                           type="button"
                           onClick={() => onOpen(inc)}
-                          className={`inc-cal-event ${claseSlaChip(sla)}`}
+                          className={`inc-cal-event ${claseCalEvento(inc)}`}
                           title={`${inc.titulo} — ${parseFechaApi(inc.fecha_limite!).toLocaleString("es-ES")}`}
                         >
                           <span
                             className="inc-cal-event-accent"
-                            style={{ backgroundColor: accentSla(sla, tema.color) }}
+                            style={{ backgroundColor: accentCalEvento(inc, tema.color) }}
                             aria-hidden
                           />
                           <span className="inc-cal-event-id">VEL-{inc.id}</span>
