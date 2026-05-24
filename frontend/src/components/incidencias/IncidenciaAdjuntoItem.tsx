@@ -7,6 +7,7 @@ import {
 } from "../../lib/api";
 import { validarImagen } from "../../lib/imagenes";
 import { AuthImage } from "../AuthImage";
+import { ConfirmDialog } from "../ConfirmDialog";
 import { Check, Eye, Loader2, Pencil, Trash2, Upload, X } from "lucide-react";
 
 type Props = {
@@ -32,6 +33,7 @@ export function IncidenciaAdjuntoItem({
   const [nombre, setNombre] = useState(adjunto.nombre_original);
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const url = apiAssetUrl(adjunto.imagen_url);
 
@@ -51,11 +53,11 @@ export function IncidenciaAdjuntoItem({
     }
   }
 
-  async function eliminar() {
-    if (!window.confirm(`¿Eliminar «${adjunto.nombre_original}»?`)) return;
+  async function confirmarEliminacion() {
     setEliminando(true);
     try {
       await apiEliminarIncidenciaAdjunto(incidenciaId, adjunto.id);
+      setConfirmarEliminar(false);
       onEliminado(adjunto.id);
     } catch (e) {
       onError?.(e instanceof Error ? e.message : "No se pudo eliminar");
@@ -161,7 +163,7 @@ export function IncidenciaAdjuntoItem({
           </button>
           <button
             type="button"
-            onClick={() => void eliminar()}
+            onClick={() => setConfirmarEliminar(true)}
             disabled={eliminando}
             className="rounded-full border border-[var(--velo-border)] bg-white p-1 text-rose-600 shadow hover:bg-rose-50 disabled:opacity-50"
             aria-label="Eliminar adjunto"
@@ -177,6 +179,20 @@ export function IncidenciaAdjuntoItem({
       <p className="mt-1 max-w-[5rem] truncate text-[9px] text-[var(--velo-text-subtle)]">
         {adjunto.nombre_original}
       </p>
+
+      <ConfirmDialog
+        open={confirmarEliminar}
+        title="Eliminar adjunto"
+        description={
+          <>
+            ¿Seguro que quieres eliminar <strong>{adjunto.nombre_original}</strong>? Esta acción no se
+            puede deshacer.
+          </>
+        }
+        loading={eliminando}
+        onCancel={() => !eliminando && setConfirmarEliminar(false)}
+        onConfirm={() => void confirmarEliminacion()}
+      />
     </div>
   );
 }

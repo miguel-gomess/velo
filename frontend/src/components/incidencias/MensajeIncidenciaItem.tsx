@@ -8,6 +8,7 @@ import {
 import { limpiarMarcadoresMensaje } from "../../lib/imagenes";
 import { TextoConImagenes } from "./TextoConImagenes";
 import { AuthImage } from "../AuthImage";
+import { ConfirmDialog } from "../ConfirmDialog";
 import { UserAvatar } from "../UserAvatar";
 import { TiempoRelativo } from "../TiempoRelativo";
 import { Check, Loader2, Lock, Pencil, Trash2, X } from "lucide-react";
@@ -37,6 +38,7 @@ export function MensajeIncidenciaItem({
   const [texto, setTexto] = useState(mensaje.contenido ?? "");
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
 
   const imgUrlLegacy = mensaje.imagen_url ? apiAssetUrl(mensaje.imagen_url) : null;
   const contenidoMostrar = limpiarMarcadoresMensaje(mensaje.contenido ?? "");
@@ -58,11 +60,11 @@ export function MensajeIncidenciaItem({
     }
   }
 
-  async function eliminar() {
-    if (!window.confirm("¿Eliminar este comentario?")) return;
+  async function confirmarEliminacion() {
     setEliminando(true);
     try {
       await apiEliminarIncidenciaMensaje(incidenciaId, mensaje.id);
+      setConfirmarEliminar(false);
       onEliminado?.(mensaje.id);
     } catch (e) {
       onError?.(e instanceof Error ? e.message : "No se pudo eliminar");
@@ -111,7 +113,7 @@ export function MensajeIncidenciaItem({
                 </button>
                 <button
                   type="button"
-                  onClick={() => void eliminar()}
+                  onClick={() => setConfirmarEliminar(true)}
                   disabled={eliminando}
                   className="rounded p-1 text-[var(--velo-text-subtle)] hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
                   aria-label="Eliminar comentario"
@@ -191,6 +193,15 @@ export function MensajeIncidenciaItem({
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmarEliminar}
+        title="Eliminar comentario"
+        description="¿Seguro que quieres eliminar este comentario? Esta acción no se puede deshacer."
+        loading={eliminando}
+        onCancel={() => !eliminando && setConfirmarEliminar(false)}
+        onConfirm={() => void confirmarEliminacion()}
+      />
     </article>
   );
 }
