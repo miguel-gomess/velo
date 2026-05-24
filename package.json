@@ -8,6 +8,8 @@
     "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
     "dev:backend": "npm run dev --prefix backend",
     "dev:frontend": "npm run dev --prefix frontend",
+    "seed:memoria": "npm run db:incidencias --prefix backend && npm run seed:memoria --prefix backend",
+    "memoria": "node scripts/prepare-memoria-capturas.mjs && node scripts/capturar-pantallas-memoria.mjs && cd scripts && python generar-memoria-tfg.py",
     "build": "npm run build --prefix backend && npm run build --prefix frontend",
     "build:vercel": "node scripts/vercel-build.mjs",
     "preview:unified": "npm run build:vercel && npm run start --prefix backend",

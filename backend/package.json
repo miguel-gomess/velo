@@ -17,6 +17,7 @@
     "db:setup": "node scripts/ensure-incidencias.mjs && node scripts/ensure-admin-auth.mjs && npm run seed:admin",
     "db:equipos": "node scripts/ensure-equipos.mjs",
     "seed:demo": "npx tsx scripts/seed-demo.ts",
+    "seed:memoria": "npx tsx scripts/seed-memoria-tfg.ts",
     "test": "node --test scripts/*.test.mjs",
     "db:mejoras": "node scripts/ensure-mejoras.mjs",
     "build": "next build",
