@@ -4,6 +4,8 @@ export type TipoEventoIncidencia =
   | "creada"
   | "estado"
   | "prioridad"
+  | "plazo"
+  | "epica"
   | "asignacion"
   | "descripcion"
   | "comentario"

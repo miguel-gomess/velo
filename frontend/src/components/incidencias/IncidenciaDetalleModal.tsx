@@ -5,6 +5,7 @@ import {
   apiAssetUrl,
   apiDeleteIncidencia,
   apiEnviarIncidenciaMensaje,
+  apiGetEpicas,
   apiGetIncidencia,
   apiGetIncidenciaAdjuntos,
   apiGetIncidenciaMensajes,
@@ -13,6 +14,7 @@ import {
   apiMarcarIncidenciaLeida,
   apiSubirIncidenciaAdjunto,
   apiUpdateIncidencia,
+  type Epica,
   type Incidencia,
   type IncidenciaAdjunto,
   type IncidenciaDetalle,
@@ -42,6 +44,8 @@ import { CerrarIncidenciaModal } from "./CerrarIncidenciaModal";
 import { PersonaAsignadaSelector } from "./selectors/PersonaAsignadaSelector";
 import { EstadoIncidenciaSelector } from "./selectors/EstadoIncidenciaSelector";
 import { PrioridadIncidenciaSelector } from "./selectors/PrioridadIncidenciaSelector";
+import { FechaLimiteIncidenciaInput } from "./selectors/FechaLimiteIncidenciaInput";
+import { EpicaBadge, EpicaIncidenciaSelector } from "./selectors/EpicaIncidenciaSelector";
 import {
   AlertCircle,
   Calendar,
@@ -55,6 +59,7 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
+  Timer,
   Upload,
   UserCheck,
   UserCircle,
@@ -72,6 +77,7 @@ import {
 } from "./IssueSidebar";
 import { CopiarEnlaceIncidenciaButton } from "./CopiarEnlaceIncidenciaButton";
 import { TiempoRelativo } from "../TiempoRelativo";
+import { formatFechaLimiteSla, labelSlaEstado, slaEstado } from "../portal/portalUtils";
 
 type Props = {
   incidenciaId: number;
@@ -225,6 +231,7 @@ export function IncidenciaDetalleModal({
   const [mensajes, setMensajes] = useState<IncidenciaMensaje[]>([]);
   const [adjuntos, setAdjuntos] = useState<IncidenciaAdjunto[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [epicas, setEpicas] = useState<Epica[]>([]);
   const [loading, setLoading] = useState(!initialIncidencia);
   const [loadingActividad, setLoadingActividad] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -313,6 +320,19 @@ export function IncidenciaDetalleModal({
       cancelled = true;
     };
   }, [gestionarAsignacion, incidenciaId]);
+
+  useEffect(() => {
+    if (!gestionarEstado) return;
+    let cancelled = false;
+    void apiGetEpicas()
+      .then((r) => {
+        if (!cancelled) setEpicas(r.items);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [gestionarEstado, incidenciaId]);
 
   const refrescarActividadModal = useCallback(async () => {
     await Promise.allSettled([
@@ -484,6 +504,40 @@ export function IncidenciaDetalleModal({
     }
   }
 
+  async function cambiarFechaLimite(fechaLimite: string | null) {
+    if (!detalle || !gestionarEstado) return;
+    const actual = detalle.fecha_limite ?? null;
+    if (fechaLimite === actual) return;
+    setGuardando(true);
+    try {
+      const { item } = await apiUpdateIncidencia(detalle.id, { fecha_limite: fechaLimite });
+      setDetalle(item as IncidenciaDetalle);
+      setHistorialRefresh((n) => n + 1);
+      onActualizada?.(item);
+    } catch {
+      setError("Error al cambiar la fecha límite");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  async function cambiarEpica(epicaId: number | null) {
+    if (!detalle || !gestionarEstado) return;
+    const actual = detalle.epica_id ?? null;
+    if (epicaId === actual) return;
+    setGuardando(true);
+    try {
+      const { item } = await apiUpdateIncidencia(detalle.id, { epica_id: epicaId });
+      setDetalle(item as IncidenciaDetalle);
+      setHistorialRefresh((n) => n + 1);
+      onActualizada?.(item);
+    } catch {
+      setError("Error al cambiar la épica");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
   async function asignarA(asignadoId: number | null) {
     if (!detalle || !gestionarAsignacion) return;
     const elegido = asignadoId ? usuarios.find((u) => u.id === asignadoId) : null;
@@ -602,6 +656,27 @@ export function IncidenciaDetalleModal({
               <span className="text-[var(--velo-text-subtle)]">Cargando…</span>
             ) : detalle ? (
               <>
+                {gestionarEstado && estadoActual !== "cerrada" ? (
+                  <>
+                    <EpicaIncidenciaSelector
+                      variant="breadcrumb"
+                      value={detalle.epica_id ?? null}
+                      onChange={(id) => void cambiarEpica(id)}
+                      epicas={epicas}
+                      disabled={guardando}
+                    />
+                    <ChevronRight size={14} className="shrink-0 text-[var(--velo-text-subtle)]" />
+                  </>
+                ) : detalle.epica_nombre ? (
+                  <>
+                    <EpicaBadge
+                      nombre={detalle.epica_nombre}
+                      clave={detalle.epica_clave}
+                      color={detalle.epica_color}
+                    />
+                    <ChevronRight size={14} className="shrink-0 text-[var(--velo-text-subtle)]" />
+                  </>
+                ) : null}
                 <span className="shrink-0 font-semibold text-[var(--velo-brand)]">VEL-{detalle.id}</span>
                 <ChevronRight size={14} className="hidden shrink-0 text-[var(--velo-text-subtle)] sm:block" />
                 <span className="hidden truncate text-[var(--velo-text-muted)] sm:inline">
@@ -962,26 +1037,48 @@ export function IncidenciaDetalleModal({
 
                 <IssueSidebarField label="Prioridad" icon={Flag}>
                   {gestionarEstado && estadoActual !== "cerrada" ? (
-                    <>
-                      <PrioridadIncidenciaSelector
-                        value={normalizarPrioridadValor(detalle.prioridad)}
-                        disabled={guardando}
-                        permitirTodos={false}
-                        size="sidebar"
-                        onChange={(p) => {
-                          if (p) void cambiarPrioridad(p);
-                        }}
-                      />
-                      {detalle.fecha_limite && (
-                        <IssueSidebarDeadline>
-                          Plazo: {formatFecha(detalle.fecha_limite)}
-                        </IssueSidebarDeadline>
-                      )}
-                    </>
+                    <PrioridadIncidenciaSelector
+                      value={normalizarPrioridadValor(detalle.prioridad)}
+                      disabled={guardando}
+                      permitirTodos={false}
+                      size="sidebar"
+                      onChange={(p) => {
+                        if (p) void cambiarPrioridad(p);
+                      }}
+                    />
                   ) : (
                     <span className="text-sm font-semibold capitalize text-[var(--velo-text)]">
                       {normalizarPrioridadValor(detalle.prioridad)}
                     </span>
+                  )}
+                </IssueSidebarField>
+
+                <IssueSidebarField label="Fecha límite" icon={Timer}>
+                  {gestionarEstado && estadoActual !== "cerrada" ? (
+                    <>
+                      <FechaLimiteIncidenciaInput
+                        value={detalle.fecha_limite}
+                        disabled={guardando}
+                        onChange={(iso) => void cambiarFechaLimite(iso)}
+                      />
+                      {detalle.fecha_limite && (
+                        <IssueSidebarDeadline>
+                          {labelSlaEstado(slaEstado(detalle.fecha_limite, detalle.estado)) ??
+                            formatFechaLimiteSla(detalle.fecha_limite)}
+                        </IssueSidebarDeadline>
+                      )}
+                    </>
+                  ) : detalle.fecha_limite ? (
+                    <>
+                      <span className="issue-sidebar-date">{formatFecha(detalle.fecha_limite)}</span>
+                      {estadoActual !== "cerrada" && (
+                        <IssueSidebarDeadline>
+                          {labelSlaEstado(slaEstado(detalle.fecha_limite, detalle.estado))}
+                        </IssueSidebarDeadline>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-sm font-medium text-[var(--velo-text-subtle)]">Sin plazo</span>
                   )}
                 </IssueSidebarField>
 

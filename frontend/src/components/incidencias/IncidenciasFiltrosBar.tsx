@@ -12,8 +12,10 @@ import { PersonaAsignadaSelector } from "./selectors/PersonaAsignadaSelector";
 import { EstadoIncidenciaSelector } from "./selectors/EstadoIncidenciaSelector";
 import { PrioridadIncidenciaSelector } from "./selectors/PrioridadIncidenciaSelector";
 import { EquipoIncidenciaSelector } from "./selectors/EquipoIncidenciaSelector";
+import { EpicaIncidenciaSelector } from "./selectors/EpicaIncidenciaSelector";
 import { FiltrosGuardadosSelector } from "./FiltrosGuardadosSelector";
 import { Filter, RotateCcw, Save, Search, Trash2, X } from "lucide-react";
+import type { Epica } from "../../lib/api";
 
 type Props = {
   scope: string;
@@ -22,6 +24,7 @@ type Props = {
   asignados: OpcionPersona[];
   solicitantes: OpcionPersona[];
   equipos: string[];
+  epicas: Epica[];
   mostrarSolicitante?: boolean;
   totalVisible: number;
   totalCargadas: number;
@@ -34,6 +37,7 @@ export function IncidenciasFiltrosBar({
   asignados,
   solicitantes,
   equipos,
+  epicas,
   mostrarSolicitante = false,
   totalVisible,
   totalCargadas,
@@ -158,6 +162,14 @@ export function IncidenciasFiltrosBar({
           equipos={equipos}
           value={filtros.equipo_codigo}
           onChange={(v) => patch({ equipo_codigo: v })}
+        />
+
+        <EpicaIncidenciaSelector
+          compact
+          permitirTodos
+          epicas={epicas}
+          value={filtros.epica_id ? Number(filtros.epica_id) : null}
+          onChange={(id) => patch({ epica_id: id == null ? "" : String(id) })}
         />
 
         {mostrarSolicitante && (

@@ -80,6 +80,23 @@ export function textoVenceSla(iso: string, ahora = Date.now()): string {
   return dias === 1 ? "Vence en 1 día" : `Vence en ${dias} días`;
 }
 
+/** Convierte ISO API → valor para `<input type="datetime-local">` (hora local). */
+export function isoToDatetimeLocal(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = parseFechaApi(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Convierte valor de datetime-local → ISO UTC para la API. */
+export function datetimeLocalToIso(local: string): string | null {
+  if (!local.trim()) return null;
+  const d = new Date(local);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
 /** Intervalo de tick recomendado según antigüedad del timestamp. */
 export function intervaloRelojPara(iso: string): number {
   const t = parseFechaApi(iso).getTime();

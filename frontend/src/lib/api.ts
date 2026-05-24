@@ -65,6 +65,14 @@ export function apiAssetUrl(path: string): string {
 
 export type IncidenciaScope = "all" | "kanban" | "portal";
 
+export type Epica = {
+  id: number;
+  clave: string;
+  nombre: string;
+  color: string;
+  activa: boolean;
+};
+
 export type Incidencia = {
   id: number;
   usuario_id: number;
@@ -73,6 +81,10 @@ export type Incidencia = {
   estado: string;
   prioridad: string;
   equipo_codigo?: string | null;
+  epica_id?: number | null;
+  epica_nombre?: string | null;
+  epica_clave?: string | null;
+  epica_color?: string | null;
   asignado_a: number | null;
   asignado_por: number | null;
   fecha_asignacion: string | null;
@@ -249,6 +261,19 @@ export type IncidenciasStats = {
     porcentaje_en_plazo: number | null;
   };
   tendenciaSemanal?: Array<{ semana: string; creadas: number; cerradas: number }>;
+  porEpica?: Array<{
+    epica_id: number | null;
+    epica_clave: string | null;
+    epica_nombre: string | null;
+    epica_color: string | null;
+    total: number;
+    abiertas: number;
+    cerradas: number;
+    con_limite: number;
+    en_plazo: number;
+    fuera_plazo: number;
+    porcentaje_en_plazo: number | null;
+  }>;
 };
 
 export type IncidenciaEvento = {
@@ -352,6 +377,8 @@ export async function apiUpdateIncidencia(
     descripcion?: string;
     motivo_cierre?: string;
     resolucion?: string;
+    fecha_limite?: string | null;
+    epica_id?: number | null;
   },
 ): Promise<{ item: Incidencia }> {
   const res = await fetch(apiUrl(`/api/incidencias/${id}`), {
@@ -380,6 +407,7 @@ export async function apiCreateIncidencia(input: {
   descripcion: string;
   equipo_codigo?: string | null;
   prioridad?: string;
+  epica_id?: number | null;
 }): Promise<{ item: Incidencia }> {
   const res = await fetch(apiUrl("/api/incidencias"), {
     method: "POST",
@@ -452,6 +480,62 @@ export async function apiGetUsuarios(q: string): Promise<{ items: Usuario[] }> {
 
 export function invalidarCacheUsuarios(): void {
   usuariosCache = null;
+}
+
+let epicasCache: { items: Epica[]; fetchedAt: number } | null = null;
+const EPICAS_CACHE_MS = 60_000;
+
+export async function apiGetEpicas(opts?: { todas?: boolean }): Promise<{ items: Epica[] }> {
+  if (!opts?.todas && epicasCache && Date.now() - epicasCache.fetchedAt < EPICAS_CACHE_MS) {
+    return { items: epicasCache.items };
+  }
+  const res = await fetch(
+    apiUrl(opts?.todas ? "/api/epicas?todas=1" : "/api/epicas"),
+    { credentials: "include" },
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "No se pudieron cargar las épicas");
+  if (!opts?.todas) {
+    epicasCache = { items: data.items as Epica[], fetchedAt: Date.now() };
+  }
+  return data as { items: Epica[] };
+}
+
+export async function apiCreateEpica(input: {
+  clave: string;
+  nombre: string;
+  color?: string;
+}): Promise<{ item: Epica }> {
+  const res = await fetch(apiUrl("/api/epicas"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    credentials: "include",
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "No se pudo crear la épica");
+  invalidarCacheEpicas();
+  return data as { item: Epica };
+}
+
+export async function apiUpdateEpica(
+  id: number,
+  input: Partial<{ clave: string; nombre: string; color: string; activa: boolean }>,
+): Promise<{ item: Epica }> {
+  const res = await fetch(apiUrl(`/api/epicas/${id}`), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    credentials: "include",
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "No se pudo actualizar la épica");
+  invalidarCacheEpicas();
+  return data as { item: Epica };
+}
+
+export function invalidarCacheEpicas(): void {
+  epicasCache = null;
 }
 
 export async function apiCreateUsuario(input: {

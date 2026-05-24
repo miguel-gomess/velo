@@ -9,6 +9,9 @@ frontend/.env
 *.log
 .DS_Store
 backend/uploads/
+scripts/__pycache__/
 # SPA generada para Vercel (scripts/sync-frontend-public.mjs)
 backend/public/*
 !backend/public/.gitkeep
+
+.vercel

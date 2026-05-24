@@ -3,6 +3,7 @@ import { borrarArchivosIncidencia } from "@/lib/adjuntos";
 import { registrarEventoIncidencia } from "@/lib/eventos";
 import { logger } from "@/lib/logger";
 import { calcularFechaLimite } from "@/lib/sla";
+import { epicaActivaExiste, labelEpicaPorId } from "@/lib/epicas";
 import {
   puedeEditarContenidoIncidencia,
   puedeEliminarIncidencia,
@@ -111,8 +112,20 @@ export async function PATCH(
     }
     sets.push(`prioridad = $${idx++}`);
     values.push(body.prioridad);
+    if (body.fecha_limite === undefined) {
+      sets.push(`fecha_limite = $${idx++}`);
+      values.push(calcularFechaLimite(body.prioridad).toISOString());
+    }
+  }
+
+  if (body.fecha_limite !== undefined) {
+    const incidenciaCerrada = (incidencia.estado ?? "").trim().toLowerCase() === "cerrada";
+    const puedePlazo = puedeEstado || (puedeEditarTexto && !incidenciaCerrada);
+    if (!puedePlazo) {
+      return Response.json({ error: "No autorizado" }, { status: 403 });
+    }
     sets.push(`fecha_limite = $${idx++}`);
-    values.push(calcularFechaLimite(body.prioridad).toISOString());
+    values.push(body.fecha_limite);
   }
 
   if (body.asignado_a !== undefined) {
@@ -141,6 +154,22 @@ export async function PATCH(
     }
     sets.push(`descripcion = $${idx++}`);
     values.push(body.descripcion);
+  }
+
+  if (body.epica_id !== undefined) {
+    const incidenciaCerrada = (incidencia.estado ?? "").trim().toLowerCase() === "cerrada";
+    const puedeEpica = puedeEstado || (puedeEditarTexto && !incidenciaCerrada);
+    if (!puedeEpica) {
+      return Response.json({ error: "No autorizado" }, { status: 403 });
+    }
+    if (body.epica_id !== null) {
+      const ok = await epicaActivaExiste(body.epica_id);
+      if (!ok) {
+        return Response.json({ error: "Épica no válida" }, { status: 400 });
+      }
+    }
+    sets.push(`epica_id = $${idx++}`);
+    values.push(body.epica_id);
   }
 
   if (!sets.length) {
@@ -182,6 +211,30 @@ export async function PATCH(
       tipo: "prioridad",
       valorAnterior: incidencia.prioridad,
       valorNuevo: body.prioridad,
+    });
+  }
+  if (
+    body.fecha_limite !== undefined &&
+    body.fecha_limite !== incidencia.fecha_limite
+  ) {
+    await registrarEventoIncidencia({
+      incidenciaId: id,
+      usuarioId: usuario.id,
+      tipo: "plazo",
+      valorAnterior: incidencia.fecha_limite,
+      valorNuevo: body.fecha_limite,
+    });
+  }
+  if (body.epica_id !== undefined && body.epica_id !== incidencia.epica_id) {
+    await registrarEventoIncidencia({
+      incidenciaId: id,
+      usuarioId: usuario.id,
+      tipo: "epica",
+      valorAnterior:
+        incidencia.epica_nombre ??
+        (incidencia.epica_id ? `#${incidencia.epica_id}` : "Sin épica"),
+      valorNuevo:
+        body.epica_id === null ? "Sin épica" : await labelEpicaPorId(body.epica_id),
     });
   }
   if (body.asignado_a !== undefined && body.asignado_a !== incidencia.asignado_a) {

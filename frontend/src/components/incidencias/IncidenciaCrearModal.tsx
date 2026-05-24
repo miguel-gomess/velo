@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   apiCreateIncidencia,
+  apiGetEpicas,
   apiUpdateIncidencia,
+  type Epica,
   type Incidencia,
   type Usuario,
 } from "../../lib/api";
@@ -13,6 +15,7 @@ import {
 import { EQUIPOS_CATALOGO, labelEquipo } from "../../lib/equipos";
 import { KANBAN_COLUMNAS } from "../../lib/incidencias";
 import { PrioridadIncidenciaSelector } from "./selectors/PrioridadIncidenciaSelector";
+import { EpicaIncidenciaSelector } from "./selectors/EpicaIncidenciaSelector";
 import {
   AlertCircle,
   Calendar,
@@ -145,6 +148,8 @@ export function IncidenciaCrearModal({ me, esAdmin, onClose, onCreada }: Props) 
   const [descripcion, setDescripcion] = useState("");
   const [equipoCodigo, setEquipoCodigo] = useState("");
   const [prioridad, setPrioridad] = useState("media");
+  const [epicaId, setEpicaId] = useState<number | null>(null);
+  const [epicas, setEpicas] = useState<Epica[]>([]);
   const [imagenesPendientes, setImagenesPendientes] = useState<ImagenPendiente[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -165,6 +170,12 @@ export function IncidenciaCrearModal({ me, esAdmin, onClose, onCreada }: Props) 
   }, [esAdmin, me.equipos]);
 
   const mostrarEquipo = equiposOpciones.length > 0;
+
+  useEffect(() => {
+    void apiGetEpicas()
+      .then((r) => setEpicas(r.items))
+      .catch(() => setEpicas([]));
+  }, []);
 
   useEffect(() => {
     if (equiposOpciones.length === 1) {
@@ -196,6 +207,7 @@ export function IncidenciaCrearModal({ me, esAdmin, onClose, onCreada }: Props) 
         descripcion: d || " ",
         equipo_codigo: equipoCodigo.trim() || null,
         prioridad: prioridad.trim() || "media",
+        epica_id: epicaId,
       });
       let final = item;
       if (imagenesPendientes.length > 0) {
@@ -340,6 +352,19 @@ export function IncidenciaCrearModal({ me, esAdmin, onClose, onCreada }: Props) 
                     />
                   </SidebarField>
                 )}
+
+                <SidebarField label="Épica">
+                  <EpicaIncidenciaSelector
+                    value={epicaId}
+                    onChange={setEpicaId}
+                    epicas={epicas}
+                    disabled={enviando}
+                    size="sidebar"
+                  />
+                  <p className="mt-1.5 text-[10px] text-[var(--velo-text-subtle)]">
+                    Agrupa la tarea bajo un objetivo principal.
+                  </p>
+                </SidebarField>
 
                 <SidebarField label="Prioridad">
                   <PrioridadIncidenciaSelector

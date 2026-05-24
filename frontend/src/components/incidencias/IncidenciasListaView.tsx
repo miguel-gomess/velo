@@ -171,6 +171,7 @@ export function IncidenciasListaView({
             }
             metaPartes.push(`→ ${inc.asignado_nombre ?? "sin asignar"}`);
             if (inc.equipo_codigo) metaPartes.push(labelEquipo(inc.equipo_codigo));
+            if (inc.epica_nombre) metaPartes.push(inc.epica_nombre);
             metaPartes.push(formatFechaCorta(inc.fecha_actualizacion));
 
             return (

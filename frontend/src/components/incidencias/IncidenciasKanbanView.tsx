@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
+  apiGetEpicas,
   apiGetIncidencias,
   apiGetUsuarios,
   apiUpdateIncidencia,
+  type Epica,
   type Incidencia,
   type IncidenciaScope,
   type Usuario,
@@ -49,6 +51,7 @@ export function IncidenciasKanbanView({
   const [error, setError] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosIncidencias>(FILTROS_VACIOS);
   const [usuariosExtra, setUsuariosExtra] = useState<Usuario[]>([]);
+  const [epicas, setEpicas] = useState<Epica[]>([]);
   const [modalId, setModalId] = useState<number | null>(null);
   const [crearAbierto, setCrearAbierto] = useState(false);
   const [cerrarId, setCerrarId] = useState<number | null>(null);
@@ -67,6 +70,12 @@ export function IncidenciasKanbanView({
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    void apiGetEpicas()
+      .then((r) => setEpicas(r.items))
+      .catch(() => setEpicas([]));
+  }, []);
 
   useEffect(() => {
     if (!esAdmin) return;
@@ -196,6 +205,7 @@ export function IncidenciasKanbanView({
         asignados={opciones.asignados}
         solicitantes={opciones.solicitantes}
         equipos={opciones.equipos}
+        epicas={epicas}
         mostrarSolicitante={esAdmin || opciones.solicitantes.length > 1}
         totalVisible={filtradas.length}
         totalCargadas={items.length}
@@ -210,13 +220,30 @@ export function IncidenciasKanbanView({
 
       <KanbanVistaTabs
         items={filtradas}
+        epicas={epicas}
         me={me}
         esAdmin={esAdmin}
         loading={loading}
         sinLeerPorIncidencia={sinLeerPorIncidencia}
+        readOnly={!puedeGestionarEstado}
+        puedeEditarPlazo={puedeGestionarEstado}
         onOpen={(inc) => setModalId(inc.id)}
         onMove={mover}
-        readOnly={!puedeGestionarEstado}
+        onFiltrarEpica={(epicaId) =>
+          setFiltros((f) => ({
+            ...f,
+            epica_id:
+              epicaId == null ? "" : epicaId === "sin_epica" ? "sin_epica" : String(epicaId),
+          }))
+        }
+        onCambiarPlazo={async (id, fecha_limite) => {
+          try {
+            const { item } = await apiUpdateIncidencia(id, { fecha_limite });
+            onActualizada(item);
+          } catch (e) {
+            setError(e instanceof Error ? e.message : "No se pudo actualizar el plazo");
+          }
+        }}
       />
 
       {crearAbierto && (

@@ -7,6 +7,7 @@ export type FiltrosIncidencias = {
   prioridad: string;
   asignado_a: string;
   equipo_codigo: string;
+  epica_id: string;
   solicitante_id: string;
   solo_fuera_sla: boolean;
 };
@@ -23,6 +24,7 @@ export const FILTROS_VACIOS: FiltrosIncidencias = {
   prioridad: "",
   asignado_a: "",
   equipo_codigo: "",
+  epica_id: "",
   solicitante_id: "",
   solo_fuera_sla: false,
 };
@@ -53,6 +55,7 @@ export function contarFiltrosActivos(f: FiltrosIncidencias): number {
   if (f.prioridad) n++;
   if (f.asignado_a) n++;
   if (f.equipo_codigo) n++;
+  if (f.epica_id) n++;
   if (f.solicitante_id) n++;
   if (f.solo_fuera_sla) n++;
   return n;
@@ -77,6 +80,11 @@ export function aplicarFiltrosIncidencias(
     if (filtros.equipo_codigo && (i.equipo_codigo ?? "") !== filtros.equipo_codigo) {
       return false;
     }
+    if (filtros.epica_id === "sin_epica") {
+      if (i.epica_id != null) return false;
+    } else if (filtros.epica_id && String(i.epica_id ?? "") !== filtros.epica_id) {
+      return false;
+    }
     if (filtros.solicitante_id && String(i.usuario_id) !== filtros.solicitante_id) {
       return false;
     }
@@ -98,7 +106,9 @@ export function aplicarFiltrosIncidencias(
       (i.solicitante_nombre?.toLowerCase().includes(q) ?? false) ||
       (i.solicitante_departamento?.toLowerCase().includes(q) ?? false) ||
       (i.asignado_nombre?.toLowerCase().includes(q) ?? false) ||
-      (i.equipo_codigo?.toLowerCase().includes(q) ?? false)
+      (i.equipo_codigo?.toLowerCase().includes(q) ?? false) ||
+      (i.epica_nombre?.toLowerCase().includes(q) ?? false) ||
+      (i.epica_clave?.toLowerCase().includes(q) ?? false)
     );
   });
 }

@@ -11,10 +11,13 @@ import {
   Paperclip,
   Pencil,
   PlusCircle,
+  Timer,
   UserPlus,
+  Layers,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { TiempoRelativo } from "../TiempoRelativo";
+import { formatFechaLimiteSla } from "../../lib/fechas";
 
 type EventoEstilo = {
   label: string;
@@ -59,6 +62,20 @@ function estiloEvento(evento: IncidenciaEvento): EventoEstilo {
       dotClass: "issue-historial-dot--priority",
       cardClass: "issue-historial-card--priority",
       iconClass: "issue-historial-icon--priority",
+    },
+    plazo: {
+      label: "Fecha límite",
+      Icon: Timer,
+      dotClass: "issue-historial-dot--priority",
+      cardClass: "issue-historial-card--priority",
+      iconClass: "issue-historial-icon--priority",
+    },
+    epica: {
+      label: "Épica",
+      Icon: Layers,
+      dotClass: "issue-historial-dot--state",
+      cardClass: "issue-historial-card--state",
+      iconClass: "issue-historial-icon--state",
     },
     asignacion: {
       label: "Asignación",
@@ -118,6 +135,16 @@ function textoDetalle(detalle: string | null, interno: boolean): string | null {
   return t;
 }
 
+function formatearValorHistorial(tipo: string, valor: string | null): string {
+  if (valor == null || valor === "") {
+    if (tipo === "plazo") return "Sin plazo";
+    if (tipo === "epica") return "Sin épica";
+    return "—";
+  }
+  if (tipo === "plazo") return formatFechaLimiteSla(valor);
+  return valor;
+}
+
 function HistorialEventoItem({ evento }: { evento: IncidenciaEvento }) {
   const estilo = estiloEvento(evento);
   const interno =
@@ -153,11 +180,11 @@ function HistorialEventoItem({ evento }: { evento: IncidenciaEvento }) {
         {tieneCambio && (
           <div className="issue-historial-change mt-2.5">
             <span className="issue-historial-pill issue-historial-pill--old">
-              {evento.valor_anterior}
+              {formatearValorHistorial(evento.tipo, evento.valor_anterior)}
             </span>
             <ArrowRightLeft size={12} className="shrink-0 text-[var(--velo-text-subtle)]" />
             <span className="issue-historial-pill issue-historial-pill--new">
-              {evento.valor_nuevo}
+              {formatearValorHistorial(evento.tipo, evento.valor_nuevo)}
             </span>
           </div>
         )}

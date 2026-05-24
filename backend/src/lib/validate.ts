@@ -6,6 +6,7 @@ export const crearIncidenciaSchema = z.object({
   descripcion: z.string().trim().min(1).max(8000),
   equipo_codigo: z.string().trim().max(64).nullable().optional(),
   prioridad: z.enum(PRIORIDADES_VALIDAS).optional(),
+  epica_id: z.number().int().positive().nullable().optional(),
 });
 
 export const patchIncidenciaSchema = z
@@ -17,6 +18,7 @@ export const patchIncidenciaSchema = z
     motivo_cierre: z.enum(["resuelta", "rechazada", "duplicada"]).optional(),
     resolucion: z.string().trim().max(8000).optional(),
     fecha_limite: z.string().datetime().nullable().optional(),
+    epica_id: z.number().int().positive().nullable().optional(),
   })
   .strict();
 
@@ -45,6 +47,48 @@ export const actualizarUsuarioSchema = z
       val.departamento !== undefined ||
       val.es_admin !== undefined ||
       val.password !== undefined,
+    { message: "Nada que actualizar" },
+  );
+
+export const crearEpicaSchema = z.object({
+  clave: z
+    .string()
+    .trim()
+    .min(2)
+    .max(32)
+    .regex(/^[A-Z0-9_-]+$/i, "Clave alfanumérica"),
+  nombre: z.string().trim().min(1).max(120),
+  color: z
+    .string()
+    .trim()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Color hex (#RRGGBB)")
+    .optional(),
+});
+
+export const actualizarEpicaSchema = z
+  .object({
+    clave: z
+      .string()
+      .trim()
+      .min(2)
+      .max(32)
+      .regex(/^[A-Z0-9_-]+$/i, "Clave alfanumérica")
+      .optional(),
+    nombre: z.string().trim().min(1).max(120).optional(),
+    color: z
+      .string()
+      .trim()
+      .regex(/^#[0-9a-fA-F]{6}$/, "Color hex (#RRGGBB)")
+      .optional(),
+    activa: z.boolean().optional(),
+  })
+  .strict()
+  .refine(
+    (val) =>
+      val.clave !== undefined ||
+      val.nombre !== undefined ||
+      val.color !== undefined ||
+      val.activa !== undefined,
     { message: "Nada que actualizar" },
   );
 

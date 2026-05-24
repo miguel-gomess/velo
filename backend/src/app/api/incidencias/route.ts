@@ -1,9 +1,11 @@
 import { pool } from "@/lib/db";
 import { registrarEventoIncidencia } from "@/lib/eventos";
+import { epicaActivaExiste } from "@/lib/epicas";
 import { getEquiposUsuario, normalizeEquipoCodigo } from "@/lib/equipos";
 import { PRIORIDAD_DEFECTO, normalizarPrioridad } from "@/lib/prioridades";
 import { calcularFechaLimite } from "@/lib/sla";
 import { crearIncidenciaSchema, parseJson } from "@/lib/validate";
+import { getIncidenciaById } from "@/lib/incidencias";
 import { getUsuarioFromRequest, isAdminUsuario } from "@/lib/session";
 
 type IncidenciaRow = {
@@ -14,6 +16,10 @@ type IncidenciaRow = {
   estado: string;
   prioridad: string;
   equipo_codigo: string | null;
+  epica_id: number | null;
+  epica_nombre: string | null;
+  epica_clave: string | null;
+  epica_color: string | null;
   asignado_a: number | null;
   asignado_por: number | null;
   fecha_asignacion: string | null;
@@ -29,6 +35,7 @@ type IncidenciaRow = {
 
 const INCIDENCIA_SELECT = `
   i.id, i.usuario_id, i.titulo, i.descripcion, i.estado, i.prioridad, i.equipo_codigo,
+  i.epica_id, ep.nombre AS epica_nombre, ep.clave AS epica_clave, ep.color AS epica_color,
   i.asignado_a, i.asignado_por, i.fecha_asignacion, i.fecha_cierre, i.fecha_limite, i.resolucion,
   i.fecha_creacion, i.fecha_actualizacion
 `;
@@ -37,6 +44,7 @@ const JOIN_SOLICITANTE = `
   FROM incidencias i
   INNER JOIN usuarios u ON u.id = i.usuario_id
   LEFT JOIN usuarios a ON a.id = i.asignado_a
+  LEFT JOIN epicas ep ON ep.id = i.epica_id
 `;
 
 export async function GET(request: Request) {
@@ -142,20 +150,26 @@ export async function POST(request: Request) {
     return Response.json({ error: parsed.error }, { status: 400 });
   }
 
-  const { titulo, descripcion, equipo_codigo, prioridad: prioridadRaw } = parsed.data;
+  const { titulo, descripcion, equipo_codigo, prioridad: prioridadRaw, epica_id } = parsed.data;
   const equipoCodigo = normalizeEquipoCodigo(equipo_codigo ?? null);
   const prioridad = normalizarPrioridad(prioridadRaw) ?? PRIORIDAD_DEFECTO;
   const fechaLimite = calcularFechaLimite(prioridad);
 
-  const { rows } = await pool.query<IncidenciaRow>(
+  let epicaId: number | null = epica_id ?? null;
+  if (epicaId != null) {
+    const ok = await epicaActivaExiste(epicaId);
+    if (!ok) {
+      return Response.json({ error: "Épica no válida" }, { status: 400 });
+    }
+  }
+
+  const { rows } = await pool.query<{ id: number }>(
     `
-    INSERT INTO incidencias (usuario_id, titulo, descripcion, equipo_codigo, prioridad, fecha_limite)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING id, usuario_id, titulo, descripcion, estado, prioridad, equipo_codigo,
-      asignado_a, asignado_por, fecha_asignacion, fecha_cierre, fecha_limite, resolucion,
-      fecha_creacion, fecha_actualizacion
+    INSERT INTO incidencias (usuario_id, titulo, descripcion, equipo_codigo, prioridad, fecha_limite, epica_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING id
   `,
-    [usuario.id, titulo, descripcion, equipoCodigo, prioridad, fechaLimite.toISOString()],
+    [usuario.id, titulo, descripcion, equipoCodigo, prioridad, fechaLimite.toISOString(), epicaId],
   );
 
   if (!rows[0]) {
@@ -169,5 +183,6 @@ export async function POST(request: Request) {
     detalle: titulo.slice(0, 120),
   });
 
-  return Response.json({ item: rows[0] }, { status: 201 });
+  const detalle = await getIncidenciaById(rows[0].id);
+  return Response.json({ item: detalle ?? rows[0] }, { status: 201 });
 }

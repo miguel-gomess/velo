@@ -16,6 +16,10 @@ export type IncidenciaDetalle = {
   estado: string;
   prioridad: string;
   equipo_codigo: string | null;
+  epica_id: number | null;
+  epica_nombre: string | null;
+  epica_clave: string | null;
+  epica_color: string | null;
   asignado_a: number | null;
   asignado_por: number | null;
   fecha_asignacion: string | null;
@@ -32,6 +36,7 @@ export type IncidenciaDetalle = {
 
 const DETALLE_SELECT = `
   i.id, i.usuario_id, i.titulo, i.descripcion, i.estado, i.prioridad, i.equipo_codigo,
+  i.epica_id, ep.nombre AS epica_nombre, ep.clave AS epica_clave, ep.color AS epica_color,
   i.asignado_a, i.asignado_por, i.fecha_asignacion, i.fecha_cierre, i.fecha_limite, i.motivo_cierre, i.resolucion,
   i.fecha_creacion, i.fecha_actualizacion,
   u.nombre AS solicitante_nombre,
@@ -39,13 +44,18 @@ const DETALLE_SELECT = `
   a.nombre AS asignado_nombre
 `;
 
+const DETALLE_FROM = `
+  FROM incidencias i
+  INNER JOIN usuarios u ON u.id = i.usuario_id
+  LEFT JOIN usuarios a ON a.id = i.asignado_a
+  LEFT JOIN epicas ep ON ep.id = i.epica_id
+`;
+
 export async function getIncidenciaById(id: number): Promise<IncidenciaDetalle | null> {
   const { rows } = await pool.query<IncidenciaDetalle>(
     `
     SELECT ${DETALLE_SELECT}
-    FROM incidencias i
-    INNER JOIN usuarios u ON u.id = i.usuario_id
-    LEFT JOIN usuarios a ON a.id = i.asignado_a
+    ${DETALLE_FROM}
     WHERE i.id = $1
     LIMIT 1
   `,

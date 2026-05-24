@@ -158,3 +158,10 @@ const mejorasRun = spawnSync(process.execPath, [mejorasScript], {
   env: process.env,
 });
 if (mejorasRun.status !== 0) process.exit(mejorasRun.status ?? 1);
+
+const epicasScript = resolve(dirname(fileURLToPath(import.meta.url)), "ensure-epicas.mjs");
+const epicasRun = spawnSync(process.execPath, [epicasScript], {
+  stdio: "inherit",
+  env: process.env,
+});
+if (epicasRun.status !== 0) process.exit(epicasRun.status ?? 1);

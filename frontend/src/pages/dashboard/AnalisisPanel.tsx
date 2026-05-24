@@ -24,6 +24,7 @@ import {
   Download,
   Inbox,
   Kanban,
+  Map as MapIcon,
   RefreshCw,
   ShieldCheck,
   Timer,
@@ -43,6 +44,11 @@ function exportarCsv(data: IncidenciasStats) {
   }
   for (const e of data.porEstado) {
     lines.push(`estado,${e.estado},${e.total}`);
+  }
+  for (const e of data.porEpica ?? []) {
+    lines.push(
+      `epica,${e.epica_clave ?? "sin_epica"},total=${e.total};en_plazo=${e.en_plazo};fuera=${e.fuera_plazo};pct=${e.porcentaje_en_plazo ?? ""}`,
+    );
   }
   for (const t of data.tendenciaSemanal ?? []) {
     lines.push(`semana,${t.semana},creadas=${t.creadas};cerradas=${t.cerradas}`);
@@ -233,6 +239,20 @@ export function PanelAnalisis() {
       value: r.total,
       key: r.estado,
     }));
+  }, [data]);
+
+  const epicaSlaData = useMemo(() => {
+    if (!data?.porEpica?.length) return [];
+    return data.porEpica
+      .filter((e) => e.con_limite > 0)
+      .map((e) => ({
+        nombre: e.epica_clave ?? "SIN-EPICA",
+        titulo: e.epica_nombre ?? "Sin épica",
+        "En plazo": e.en_plazo,
+        "Fuera de plazo": e.fuera_plazo,
+        pct: e.porcentaje_en_plazo,
+        color: e.epica_color ?? "#6366f1",
+      }));
   }, [data]);
 
   const vacio = !loading && data && data.totalIncidencias === 0;
@@ -546,6 +566,72 @@ export function PanelAnalisis() {
                   </div>
                 </section>
               </div>
+
+              {epicaSlaData.length > 0 ? (
+                <section className="rounded-2xl border border-[var(--velo-border)] bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <MapIcon size={16} className="text-[var(--velo-brand)]" />
+                    <h2 className="text-sm font-bold text-[var(--velo-text)]">SLA por épica</h2>
+                  </div>
+                  <p className="mt-0.5 text-xs text-[var(--velo-text-muted)]">
+                    Incidencias con fecha límite: en plazo vs fuera de plazo, agrupadas por épica.
+                  </p>
+                  <div className="mt-4 h-[240px] w-full min-w-0 overflow-x-auto sm:h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={epicaSlaData} margin={{ top: 8, right: 8, left: 0, bottom: 44 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                        <XAxis
+                          dataKey="nombre"
+                          tick={{ fontSize: 10, fill: "#64748b" }}
+                          interval={0}
+                          angle={-18}
+                          textAnchor="end"
+                          height={52}
+                        />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+                        <Tooltip
+                          formatter={(value: number, name: string) => [value, name]}
+                          labelFormatter={(_, payload) =>
+                            payload?.[0]?.payload?.titulo ?? ""
+                          }
+                        />
+                        <Legend wrapperStyle={{ fontSize: 11 }} />
+                        <Bar dataKey="En plazo" stackId="sla" fill="#34d399" radius={[0, 0, 0, 0]} />
+                        <Bar
+                          dataKey="Fuera de plazo"
+                          stackId="sla"
+                          fill="#fb7185"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {data.porEpica?.map((e) => (
+                      <li
+                        key={e.epica_id ?? "sin"}
+                        className="rounded-xl border border-[var(--velo-border)] px-3 py-2.5 text-xs"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="size-2.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: e.epica_color ?? "#94a3b8" }}
+                          />
+                          <span className="font-semibold text-[var(--velo-text)]">
+                            {e.epica_clave ?? "SIN-EPICA"}
+                          </span>
+                          <span className="ml-auto tabular-nums text-[var(--velo-text-muted)]">
+                            {e.porcentaje_en_plazo != null ? `${e.porcentaje_en_plazo}%` : "—"}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[10px] text-[var(--velo-text-subtle)]">
+                          {e.total} incidencias · {e.fuera_plazo} fuera de plazo
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
 
               {data.cargaPorAgente.length > 0 ? (
                 <section className="rounded-2xl border border-[var(--velo-border)] bg-white p-5 shadow-sm">

@@ -80,12 +80,44 @@ Frontend en otra terminal: `cd frontend && npm run dev`.
 - Seguridad API: `scope=all` y CRUD `/api/users` solo admin; CORS vía `ALLOWED_ORIGINS`.
 - Validación Zod en alta de incidencias y usuarios.
 - SLA: columna `fecha_limite`, KPI `% en plazo` en análisis.
-- Filtros en tablero admin (búsqueda, estado, prioridad).
+- Filtros en tablero admin (búsqueda, estado, prioridad, épica, fuera de SLA).
 - Portal: pestañas Actividad/Histórico, copiar enlace, orden por última actualización.
 - Accesibilidad: `lang="es"`, menú «Mover a…» en tarjetas Kanban.
 - Healthcheck `GET /api/health`, panel Configuración de equipos, export CSV en análisis.
 
-## 9. Trabajo futuro (fuera de alcance mínimo)
+## 9. Paquete TFG — roadmap, épicas y planificación
+
+### Épicas
+
+- Tabla `epicas` (clave, nombre, color, activa) y `incidencias.epica_id`.
+- Catálogo inicial: INFRA, PORTAL, SEGURIDAD, PROCESOS, SOPORTE.
+- API: `GET /api/epicas`, `POST` y `PATCH /api/epicas/:id` (admin).
+- CRUD en **Dashboard → Configuración → Épicas de roadmap**.
+
+### Vistas de planificación (tablero de incidencias)
+
+| Vista | Función |
+|-------|---------|
+| **Roadmap** | Tarjetas por épica: % cerradas, SLA, próximo límite, filtro y salto a cronograma/calendario |
+| **Cronograma** | Gantt por épica (creación → límite); arrastre del borde derecho para cambiar `fecha_limite` |
+| **Calendario** | Incidencias por día de `fecha_limite` con colores SLA |
+
+### Análisis
+
+- `GET /api/incidencias/stats` incluye `porEpica` (total, en/fuera de plazo, % SLA).
+- Gráfico apilado **SLA por épica** y desglose en tarjetas.
+
+### Flujo portal → equipo → cierre (para memoria y capturas)
+
+1. **Portal del empleado** (`/portal`): el solicitante crea la incidencia (título, descripción, prioridad, equipo). Recibe plazo SLA automático y puede seguir el hilo y adjuntos.
+2. **Workspace / tablero** (`/workspace` o `/dashboard/incidencias`): el agente ve la tarjeta en Kanban, asigna épica, agente y fecha límite; mueve columnas; comentarios internos opcionales.
+3. **Planificación**: roadmap y cronograma muestran el trabajo agrupado por épica y plazos; el arrastre en el Gantt actualiza el límite con evento de historial tipo `plazo`.
+4. **Cierre**: al pasar a cerrada, modal con motivo (`resuelta` / `rechazada` / `duplicada`) y texto de resolución; queda en historial auditable.
+5. **Análisis** (`/dashboard/analisis`): administración revisa KPIs globales y por épica para la memoria del TFG.
+
+Sugerencia de capturas: portal (alta + detalle), tablero con filtros por épica, roadmap, cronograma con arrastre de plazo, panel SLA por épica, modal de cierre.
+
+## 10. Trabajo futuro (fuera de alcance mínimo)
 
 - WebSockets para notificaciones en tiempo real.
 - Export PDF de incidencia cerrada.

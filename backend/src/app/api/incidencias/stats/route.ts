@@ -15,6 +15,20 @@ export type EstadoIncidenciaStats = {
   total: number;
 };
 
+export type EpicaIncidenciaStats = {
+  epica_id: number | null;
+  epica_clave: string | null;
+  epica_nombre: string | null;
+  epica_color: string | null;
+  total: number;
+  abiertas: number;
+  cerradas: number;
+  con_limite: number;
+  en_plazo: number;
+  fuera_plazo: number;
+  porcentaje_en_plazo: number | null;
+};
+
 export async function GET(request: Request) {
   const usuario = await getUsuarioFromRequest(request);
   if (!usuario) {
@@ -202,6 +216,76 @@ export async function GET(request: Request) {
     cerradas: mapX.get(semana) ?? 0,
   }));
 
+  const { rows: porEpicaRows } = await pool.query<{
+    epica_id: number | null;
+    epica_clave: string | null;
+    epica_nombre: string | null;
+    epica_color: string | null;
+    total: string;
+    abiertas: string;
+    cerradas: string;
+    con_limite: string;
+    en_plazo: string;
+    fuera_plazo: string;
+  }>(
+    `
+    SELECT
+      e.id AS epica_id,
+      e.clave AS epica_clave,
+      e.nombre AS epica_nombre,
+      e.color AS epica_color,
+      COUNT(*)::text AS total,
+      SUM(
+        CASE WHEN LOWER(TRIM(BOTH FROM i.estado)) NOT IN ('cerrada', 'cerrado', 'resuelta', 'resuelto')
+        THEN 1 ELSE 0 END
+      )::text AS abiertas,
+      SUM(
+        CASE WHEN LOWER(TRIM(BOTH FROM i.estado)) IN ('cerrada', 'cerrado', 'resuelta', 'resuelto')
+        THEN 1 ELSE 0 END
+      )::text AS cerradas,
+      COUNT(*) FILTER (WHERE i.fecha_limite IS NOT NULL)::text AS con_limite,
+      COUNT(*) FILTER (
+        WHERE i.fecha_limite IS NOT NULL
+          AND (
+            (i.fecha_cierre IS NOT NULL AND i.fecha_cierre <= i.fecha_limite)
+            OR (i.fecha_cierre IS NULL AND NOW() <= i.fecha_limite)
+          )
+      )::text AS en_plazo,
+      COUNT(*) FILTER (
+        WHERE i.fecha_limite IS NOT NULL
+          AND (
+            (i.fecha_cierre IS NOT NULL AND i.fecha_cierre > i.fecha_limite)
+            OR (i.fecha_cierre IS NULL AND NOW() > i.fecha_limite)
+          )
+      )::text AS fuera_plazo
+    FROM incidencias i
+    LEFT JOIN epicas e ON e.id = i.epica_id
+    WHERE 1=1 ${filtroFecha}
+    GROUP BY e.id, e.clave, e.nombre, e.color
+    ORDER BY COUNT(*) DESC, COALESCE(e.nombre, 'zzz') ASC
+    `,
+    params,
+  );
+
+  const porEpica: EpicaIncidenciaStats[] = porEpicaRows.map((r) => {
+    const conLimiteEp = Number(r.con_limite);
+    const enPlazoEp = Number(r.en_plazo);
+    return {
+      epica_id: r.epica_id,
+      epica_clave: r.epica_clave,
+      epica_nombre: r.epica_nombre,
+      epica_color: r.epica_color,
+      total: Number(r.total),
+      abiertas: Number(r.abiertas),
+      cerradas: Number(r.cerradas),
+      con_limite: conLimiteEp,
+      en_plazo: enPlazoEp,
+      fuera_plazo: Number(r.fuera_plazo),
+      porcentaje_en_plazo:
+        conLimiteEp > 0 ? Math.round((enPlazoEp / conLimiteEp) * 1000) / 10 : null,
+    };
+  });
+
   const sla = slaRows[0];
   const conLimite = Number(sla?.con_limite ?? 0);
   const enPlazo = Number(sla?.en_plazo ?? 0);
@@ -225,5 +309,6 @@ export async function GET(request: Request) {
         conLimite > 0 ? Math.round((enPlazo / conLimite) * 1000) / 10 : null,
     },
     tendenciaSemanal: tendencia,
+    porEpica,
   });
 }

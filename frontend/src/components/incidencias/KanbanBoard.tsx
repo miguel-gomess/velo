@@ -12,6 +12,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { apiAssetUrl, type Incidencia, type Usuario } from "../../lib/api";
 import { AuthImage } from "../AuthImage";
 import { CopiarEnlaceIncidenciaButton } from "./CopiarEnlaceIncidenciaButton";
+import { EpicaBadge } from "./selectors/EpicaIncidenciaSelector";
 import {
   KANBAN_COLUMNAS,
   KANBAN_TEMAS,
@@ -202,6 +203,16 @@ function CardLayout({
         <h3 className="mt-1.5 line-clamp-2 text-sm font-semibold leading-snug text-[var(--velo-text)]">
           {inc.titulo}
         </h3>
+
+        {inc.epica_nombre ? (
+          <div className="mt-1.5">
+            <EpicaBadge
+              nombre={inc.epica_nombre}
+              clave={inc.epica_clave}
+              color={inc.epica_color}
+            />
+          </div>
+        ) : null}
 
         {inc.equipo_codigo ? (
           <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--velo-text-subtle)]">

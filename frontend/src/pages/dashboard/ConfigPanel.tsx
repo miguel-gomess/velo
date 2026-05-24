@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiUrl } from "../../lib/api";
 import { equipoAccentClass } from "../../lib/equipos";
 import { SLA_PRIORIDADES, formatoPlazoSla } from "../../lib/sla";
+import { EpicasConfigSection } from "./EpicasConfigSection";
 import { PageHeader } from "../../components/layout/PageHeader";
 import {
   BarChart3,
@@ -101,6 +102,8 @@ export function ConfigPanel() {
           </p>
         </div>
       </div>
+
+      <EpicasConfigSection />
 
       <section className="space-y-4">
         <div className="flex items-center gap-2">
