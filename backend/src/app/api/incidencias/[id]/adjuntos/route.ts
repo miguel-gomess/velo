@@ -29,22 +29,28 @@ export async function GET(
   const res = await cargarIncidenciaAccesible(request, params);
   if (!res.ok) return res.response;
 
-  const { rows } = await pool.query<AdjuntoRow>(
+  const { rows } = await pool.query<AdjuntoRow & { es_propio: boolean }>(
     `
     SELECT
       a.id, a.incidencia_id, a.autor_id, a.ruta, a.nombre_original,
       a.mime_type, a.tamano_bytes, a.fecha_creacion,
-      u.nombre AS autor_nombre
+      u.nombre AS autor_nombre,
+      (a.autor_id = $2) AS es_propio
     FROM incidencia_adjuntos a
     INNER JOIN usuarios u ON u.id = a.autor_id
     WHERE a.incidencia_id = $1
       AND COALESCE(a.tipo, 'evidencia') = 'evidencia'
     ORDER BY a.fecha_creacion ASC
   `,
-    [res.id],
+    [res.id, res.usuario.id],
   );
 
-  return Response.json({ items: rows.map(mapAdjunto) });
+  return Response.json({
+    items: rows.map((row) => ({
+      ...mapAdjunto(row),
+      es_propio: row.es_propio,
+    })),
+  });
 }
 
 export async function POST(

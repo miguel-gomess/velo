@@ -284,6 +284,30 @@ export async function guardarImagenIncidencia(
   };
 }
 
+/** Elimina un fichero concreto (BD + disco si aplica). */
+export async function borrarArchivoPorRuta(rutaRelativa: string): Promise<void> {
+  try {
+    const incidenciaId = incidenciaIdDesdeRuta(rutaRelativa);
+    await pool.query(`DELETE FROM incidencia_archivos WHERE incidencia_id = $1 AND ruta = $2`, [
+      incidenciaId,
+      rutaRelativa,
+    ]);
+    await pool.query(`DELETE FROM incidencia_adjuntos WHERE incidencia_id = $1 AND ruta = $2`, [
+      incidenciaId,
+      rutaRelativa,
+    ]);
+  } catch {
+    /* ruta inválida */
+  }
+  if (!usarAlmacenDb()) {
+    try {
+      await rm(rutaAbsoluta(rutaRelativa), { force: true });
+    } catch {
+      /* no existe en disco */
+    }
+  }
+}
+
 /** Elimina ficheros de la incidencia en disco y en BD (no falla si no existen). */
 export async function borrarArchivosIncidencia(incidenciaId: number): Promise<void> {
   await borrarEnDb(incidenciaId);

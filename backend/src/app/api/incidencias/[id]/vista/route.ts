@@ -26,6 +26,7 @@ type AdjuntoRow = {
   tamano_bytes: number;
   fecha_creacion: string;
   autor_nombre: string;
+  es_propio: boolean;
 };
 
 function mapMensaje(row: MensajeRow) {
@@ -47,6 +48,7 @@ function mapAdjunto(row: AdjuntoRow) {
   return {
     ...row,
     imagen_url: urlImagenIncidencia(row.ruta),
+    es_propio: row.es_propio,
   };
 }
 
@@ -84,19 +86,20 @@ export async function GET(
     `,
       [incidenciaId, usuario.id],
     ),
-    pool.query<AdjuntoRow>(
+    pool.query<AdjuntoRow & { es_propio: boolean }>(
       `
       SELECT
         a.id, a.incidencia_id, a.autor_id, a.ruta, a.nombre_original,
         a.mime_type, a.tamano_bytes, a.fecha_creacion,
-        u.nombre AS autor_nombre
+        u.nombre AS autor_nombre,
+        (a.autor_id = $2) AS es_propio
       FROM incidencia_adjuntos a
       INNER JOIN usuarios u ON u.id = a.autor_id
       WHERE a.incidencia_id = $1
         AND COALESCE(a.tipo, 'evidencia') = 'evidencia'
       ORDER BY a.fecha_creacion ASC
     `,
-      [incidenciaId],
+      [incidenciaId, usuario.id],
     ),
   ]);
 

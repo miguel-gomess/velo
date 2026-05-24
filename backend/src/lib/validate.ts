@@ -99,6 +99,10 @@ export const mensajeSchema = z.object({
     .optional(),
 });
 
+export const adjuntoUpdateSchema = z.object({
+  nombre_original: z.string().trim().min(1).max(255).optional(),
+});
+
 export function parseJson<T>(
   schema: z.ZodType<T>,
   body: unknown,

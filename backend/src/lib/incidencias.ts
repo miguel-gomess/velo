@@ -122,6 +122,14 @@ export function puedeEliminarIncidencia(
   return isAdminUsuario(usuario) || incidencia.usuario_id === usuario.id;
 }
 
+/** Editar o borrar mensajes/adjuntos propios (o cualquiera si es admin). */
+export function puedeGestionarContenidoAutor(
+  usuario: UsuarioSesion,
+  autorId: number,
+): boolean {
+  return isAdminUsuario(usuario) || usuario.id === autorId;
+}
+
 /** Notas internas: visibles para agentes/admin, no para el solicitante en portal. */
 export async function puedeVerMensajesInternos(
   usuario: UsuarioSesion,

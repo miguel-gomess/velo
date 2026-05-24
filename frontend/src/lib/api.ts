@@ -129,6 +129,7 @@ export type IncidenciaAdjunto = {
   fecha_creacion: string;
   autor_nombre: string;
   imagen_url: string;
+  es_propio?: boolean;
 };
 
 export async function apiGetIncidencia(id: number): Promise<{ item: IncidenciaDetalle }> {
@@ -219,6 +220,90 @@ export async function apiSubirIncidenciaAdjunto(
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "No se pudo subir la imagen");
   return data as { item: IncidenciaAdjunto };
+}
+
+export async function apiActualizarIncidenciaAdjunto(
+  incidenciaId: number,
+  adjuntoId: number,
+  opts: { nombre_original?: string; imagen?: File },
+): Promise<{ item: IncidenciaAdjunto }> {
+  let body: BodyInit;
+  const headers: HeadersInit = {};
+  if (opts.imagen) {
+    const form = new FormData();
+    if (opts.nombre_original) form.append("nombre_original", opts.nombre_original);
+    form.append("imagen", opts.imagen);
+    body = form;
+  } else {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify({ nombre_original: opts.nombre_original });
+  }
+  const res = await fetch(apiUrl(`/api/incidencias/${incidenciaId}/adjuntos/${adjuntoId}`), {
+    method: "PATCH",
+    headers,
+    body,
+    credentials: "include",
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "No se pudo actualizar el adjunto");
+  return data as { item: IncidenciaAdjunto };
+}
+
+export async function apiEliminarIncidenciaAdjunto(
+  incidenciaId: number,
+  adjuntoId: number,
+): Promise<{ ok: true }> {
+  const res = await fetch(apiUrl(`/api/incidencias/${incidenciaId}/adjuntos/${adjuntoId}`), {
+    method: "DELETE",
+    credentials: "include",
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "No se pudo eliminar el adjunto");
+  return data as { ok: true };
+}
+
+export async function apiActualizarIncidenciaMensaje(
+  incidenciaId: number,
+  mensajeId: number,
+  opts: { contenido?: string; imagen?: File | null; es_interno?: boolean },
+): Promise<{ item: IncidenciaMensaje }> {
+  let body: BodyInit;
+  const headers: HeadersInit = {};
+  if (opts.imagen) {
+    const form = new FormData();
+    if (opts.contenido !== undefined) form.append("contenido", opts.contenido);
+    if (opts.es_interno) form.append("es_interno", "true");
+    form.append("imagen", opts.imagen);
+    body = form;
+  } else {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify({
+      contenido: opts.contenido,
+      es_interno: opts.es_interno,
+    });
+  }
+  const res = await fetch(apiUrl(`/api/incidencias/${incidenciaId}/mensajes/${mensajeId}`), {
+    method: "PATCH",
+    headers,
+    body,
+    credentials: "include",
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "No se pudo editar el comentario");
+  return data as { item: IncidenciaMensaje };
+}
+
+export async function apiEliminarIncidenciaMensaje(
+  incidenciaId: number,
+  mensajeId: number,
+): Promise<{ ok: true }> {
+  const res = await fetch(apiUrl(`/api/incidencias/${incidenciaId}/mensajes/${mensajeId}`), {
+    method: "DELETE",
+    credentials: "include",
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "No se pudo eliminar el comentario");
+  return data as { ok: true };
 }
 
 export async function apiGetIncidencias(

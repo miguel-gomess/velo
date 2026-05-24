@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useVisibilityPolling } from "../../hooks/useVisibilityPolling";
 import { chatCercaDelFinal, scrollChatAlFinal } from "../../lib/scrollChat";
 import {
-  apiAssetUrl,
   apiDeleteIncidencia,
   apiEnviarIncidenciaMensaje,
   apiGetEpicas,
@@ -37,6 +36,7 @@ import {
 } from "./ComentarioEditor";
 import { ComentarioComposerZona } from "./ComentarioComposerZona";
 import { MensajeIncidenciaItem } from "./MensajeIncidenciaItem";
+import { IncidenciaAdjuntoItem } from "./IncidenciaAdjuntoItem";
 import { DescripcionEditor } from "./DescripcionEditor";
 import { DescripcionVistaJira } from "./TextoConImagenes";
 import { IncidenciaHistorial } from "./IncidenciaHistorial";
@@ -52,7 +52,6 @@ import {
   Check,
   ChevronRight,
   Clock,
-  Eye,
   Flag,
   Image as ImageIcon,
   Loader2,
@@ -563,6 +562,9 @@ export function IncidenciaDetalleModal({
     }
   }
 
+  const puedeGestionarAutor =
+    (autorId: number) => esAdmin || autorId === usuarioActualId;
+
   const puedeComentar =
     detalle &&
     (esAdmin ||
@@ -873,27 +875,25 @@ export function IncidenciaDetalleModal({
                       Arrastra imágenes aquí o usa «Adjuntar» para añadir evidencias.
                     </p>
                   ) : (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {adjuntos.map((adj) => {
-                        const url = apiAssetUrl(adj.imagen_url);
-                        return (
-                          <button
-                            key={adj.id}
-                            type="button"
-                            onClick={() => setLightboxUrl(url)}
-                            className="group relative size-20 overflow-hidden rounded-md border border-[var(--velo-border)] bg-[var(--velo-bg)] shadow-[var(--velo-shadow)]"
-                          >
-                            <AuthImage
-                              src={url}
-                              alt={adj.nombre_original}
-                              className="size-full object-cover transition-transform group-hover:scale-105"
-                            />
-                            <span className="absolute inset-0 flex items-center justify-center bg-[#091e42]/0 opacity-0 transition-opacity group-hover:bg-[#091e42]/40 group-hover:opacity-100">
-                              <Eye size={16} className="text-white" />
-                            </span>
-                          </button>
-                        );
-                      })}
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      {adjuntos.map((adj) => (
+                        <IncidenciaAdjuntoItem
+                          key={adj.id}
+                          incidenciaId={incidenciaId}
+                          adjunto={adj}
+                          puedeGestionar={puedeGestionarAutor(adj.autor_id)}
+                          onVer={(url) => setLightboxUrl(url)}
+                          onActualizado={(item) =>
+                            setAdjuntos((prev) =>
+                              prev.map((a) => (a.id === item.id ? item : a)),
+                            )
+                          }
+                          onEliminado={(id) =>
+                            setAdjuntos((prev) => prev.filter((a) => a.id !== id))
+                          }
+                          onError={setError}
+                        />
+                      ))}
                     </div>
                   )}
                 </section>
@@ -947,8 +947,19 @@ export function IncidenciaDetalleModal({
                               {mensajes.map((m) => (
                                 <MensajeIncidenciaItem
                                   key={m.id}
+                                  incidenciaId={incidenciaId}
                                   mensaje={m}
+                                  puedeGestionar={puedeGestionarAutor(m.autor_id)}
                                   onImagenClick={(url) => setLightboxUrl(url)}
+                                  onActualizado={(item) =>
+                                    setMensajes((prev) =>
+                                      prev.map((x) => (x.id === item.id ? item : x)),
+                                    )
+                                  }
+                                  onEliminado={(id) =>
+                                    setMensajes((prev) => prev.filter((x) => x.id !== id))
+                                  }
+                                  onError={setError}
                                 />
                               ))}
                             </div>

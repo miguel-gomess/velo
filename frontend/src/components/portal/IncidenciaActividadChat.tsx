@@ -139,8 +139,15 @@ export function IncidenciaActividadChat({
             {mensajes.map((m) => (
               <MensajeIncidenciaItem
                 key={m.id}
+                incidenciaId={incidenciaId}
                 mensaje={m}
+                puedeGestionar={m.es_propio === true}
                 onImagenClick={(url) => setLightboxUrl(url)}
+                onActualizado={(item) =>
+                  setMensajes((prev) => prev.map((x) => (x.id === item.id ? item : x)))
+                }
+                onEliminado={(id) => setMensajes((prev) => prev.filter((x) => x.id !== id))}
+                onError={setError}
               />
             ))}
           </div>
