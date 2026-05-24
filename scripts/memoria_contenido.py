@@ -60,7 +60,9 @@ FASES_DESARROLLO = [
         "Fase 2 — Tablero del equipo: columnas de trabajo, mover tarjetas y asignar responsable."
     ),
     (
-        "Fase 3 — Conversación y archivos: mensajes entre empleado y técnico, adjuntar capturas."
+        "Fase 3 — Conversación y archivos: mensajes con capturas e imágenes en el hilo, "
+        "comentarios internos solo para el equipo, archivos adjuntos y edición o borrado "
+        "de mensajes y evidencias por quien las creó."
     ),
     (
         "Fase 4 — Cierre ordenado: motivo obligatorio y texto de resolución al terminar."
@@ -198,8 +200,18 @@ DESARROLLO_PORTAL = [
         "de vencer o ya ha vencido, para no saturar con avisos innecesarios."
     ),
     (
-        "Las Figuras 3 a 6 corresponden al inicio de sesión, la pantalla de inicio del portal, "
-        "el listado de solicitudes y el formulario de alta, tomadas con la aplicación en marcha."
+        "Las Figuras 3 a 6 y la 5b corresponden al inicio de sesión, la pantalla de inicio del portal, "
+        "el listado de solicitudes, el formulario de alta y un ejemplo de seguimiento con "
+        "mensajes, tomadas con la aplicación en marcha."
+    ),
+]
+
+DESARROLLO_PORTAL_SEGUIMIENTO = [
+    (
+        "En «Mis solicitudes» el empleado abre cualquier petición y ve el estado, el plazo "
+        "y el hilo de mensajes con el equipo. Si el técnico adjunta una captura, la imagen "
+        "se muestra en el chat (no como enlace público). La Figura 5b recoge un ejemplo de "
+        "seguimiento con conversación visible."
     ),
 ]
 
@@ -221,6 +233,22 @@ DESARROLLO_TABLERO = [
         "solo visibles para el equipo, archivos, asignación de épica, fecha límite editable y "
         "botón para cerrar con el motivo obligatorio. La Figura 7 muestra el tablero en "
         "funcionamiento."
+    ),
+    (
+        "El hilo de actividad permite adjuntar imágenes en cada mensaje (capturas de error, "
+        "logs, etc.). Los técnicos pueden marcar comentarios como internos para coordinarse sin "
+        "que el empleado los vea. Quien publicó un mensaje o un archivo adjunto puede editarlo "
+        "o eliminarlo; el administrador también puede hacerlo. Las Figuras 8 y 9 muestran un "
+        "ejemplo con varios comentarios, una imagen visible en el chat y la sección de archivos "
+        "adjuntos."
+    ),
+]
+
+DESARROLLO_LISTA = [
+    (
+        "La vista Lista complementa al tablero cuando hay muchas incidencias: muestra diez "
+        "tarjetas por página, ordenación por fecha o prioridad y paginación al pie. "
+        "La Figura 7b ilustra este listado compacto."
     ),
 ]
 
@@ -250,7 +278,7 @@ DESARROLLO_PLANIFICACION = [
         "subconjunto concreto del trabajo."
     ),
     (
-        "Las Figuras 11 a 13 ilustran el roadmap, el cronograma y el calendario cuando la "
+        "Las Figuras 13 a 15 ilustran el roadmap, el cronograma y el calendario cuando la "
         "aplicación está en marcha."
     ),
 ]
@@ -279,7 +307,7 @@ DESARROLLO_ADMIN = [
     (
         "En configuración se revisan los equipos de soporte, los plazos asociados a cada "
         "prioridad y el catálogo de épicas (clave, nombre, color y estado activo). "
-        "Las Figuras 8 a 10 muestran el listado de administración, el panel de análisis con "
+        "Las Figuras 10 a 12 muestran el listado de administración, el panel de análisis con "
         "métricas por épica y la pantalla de configuración."
     ),
 ]

@@ -173,13 +173,17 @@ export function MensajeIncidenciaItem({
                 />
               )}
               {!tieneMarkdownImg && imgUrlLegacy && (
-                <figure className="jira-description-media">
+                <figure className="jira-description-media jira-description-media--chat">
                   <button
                     type="button"
                     onClick={() => onImagenClick?.(imgUrlLegacy)}
                     className="jira-description-media__img-btn"
                   >
-                    <AuthImage src={imgUrlLegacy} alt="Adjunto" className="max-w-full" />
+                    <AuthImage
+                      src={imgUrlLegacy}
+                      alt="Adjunto al comentario"
+                      className="jira-description-media__chat-img"
+                    />
                   </button>
                 </figure>
               )}

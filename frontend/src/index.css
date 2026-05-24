@@ -439,6 +439,27 @@ body {
   margin: 8px 0;
 }
 
+/* Comentarios: respetar tamaño real de la captura (no estirar favicons) */
+.jira-description-media--chat {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.jira-description-media--chat .jira-description-media__img-btn {
+  width: auto;
+  max-width: 100%;
+}
+
+.jira-description-media__chat-img,
+.jira-description-media--chat .jira-description-media__img-btn img {
+  display: block;
+  width: auto;
+  max-width: min(100%, 720px);
+  height: auto;
+  max-height: min(70vh, 480px);
+  object-fit: contain;
+}
+
 /* Histórico con línea de tiempo */
 .issue-historial-embedded {
   min-height: 12rem;

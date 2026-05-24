@@ -2,9 +2,25 @@
  * Captura pantallas reales con frontend+backend en marcha.
  * Uso: node scripts/capturar-pantallas-memoria.mjs
  */
+import { readFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+function loadBackendEnv() {
+  try {
+    const envPath = resolve(ROOT, "backend/.env");
+    for (const line of readFileSync(envPath, "utf8").split(/\r?\n/)) {
+      const m = line.match(/^([^#=]+)=(.*)$/);
+      if (!m) continue;
+      const k = m[1].trim();
+      const v = m[2].trim();
+      if (process.env[k] === undefined) process.env[k] = v;
+    }
+  } catch {
+    /* .env opcional */
+  }
+}
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = resolve(ROOT, "docs/memoria/imagenes");
@@ -25,13 +41,17 @@ async function resolveBaseUrl() {
 
 const DEMO_PASS = process.env.VELO_DEMO_PASS ?? "DemoVelo2025!";
 const DEMO_PASS_ALT = "demo123";
-const ADMIN_PASS = process.env.VELO_ADMIN_PASS ?? "VeloAdmin2025!";
+loadBackendEnv();
+const ADMIN_PASS = process.env.VELO_ADMIN_PASS ?? process.env.ADMIN_PASSWORD ?? "VeloAdmin2025!";
 const ADMIN_PASS_ALT = "admin123";
 
 const USERS = {
   empleado: { email: "ana@velo.com", passwords: [DEMO_PASS, DEMO_PASS_ALT] },
   agente: { email: "carlos@velo.com", passwords: [DEMO_PASS, DEMO_PASS_ALT] },
-  admin: { email: "admin@velo.com", passwords: [ADMIN_PASS, ADMIN_PASS_ALT] },
+  admin: {
+    email: "admin@velo.com",
+    passwords: [...new Set([ADMIN_PASS, ADMIN_PASS_ALT].filter(Boolean))],
+  },
 };
 
 async function waitForServer(url, attempts = 60) {
@@ -96,6 +116,74 @@ async function capturarVistasPlanificacion(page) {
   }
 }
 
+/** Busca id de incidencia en el workspace (kanban) por título. */
+async function buscarIncidenciaId(page, tituloRe) {
+  const pattern = tituloRe.source ?? String(tituloRe);
+  return page.evaluate(async (pat) => {
+    const re = new RegExp(pat, "i");
+    const r = await fetch("/api/incidencias?scope=kanban", { credentials: "include" });
+    if (!r.ok) return null;
+    const data = await r.json();
+    const items = data.items ?? [];
+    const hit = items.find((i) => re.test(i.titulo ?? ""));
+    return hit?.id ?? null;
+  }, pattern);
+}
+
+/** Abre el modal de una incidencia por título y espera a que carguen imágenes del chat. */
+async function abrirIncidenciaPorTitulo(page, tituloRe) {
+  const id = await buscarIncidenciaId(page, tituloRe);
+  if (id) {
+    await page.goto(`${BASE}/workspace?incidencia=${id}`, { waitUntil: "networkidle" });
+  } else {
+    for (let p = 0; p < 6; p++) {
+      const card = page.getByText(tituloRe).first();
+      if (await card.isVisible().catch(() => false)) {
+        await card.click();
+        break;
+      }
+      const next = page.getByRole("button", { name: /siguiente/i });
+      if (!(await next.isEnabled().catch(() => false))) break;
+      await next.click();
+      await page.waitForTimeout(600);
+    }
+  }
+  const dialog = page.locator('[role="dialog"]');
+  await dialog.waitFor({ state: "visible", timeout: 20000 });
+  await page.waitForTimeout(3500);
+  return dialog;
+}
+
+async function capturarDetalleIncidencia(page, tituloRe, fileName, opts = {}) {
+  const dialog = await abrirIncidenciaPorTitulo(page, tituloRe);
+  if (opts.tab === "historico") {
+    await page.getByRole("tab", { name: /histórico/i }).click();
+  } else {
+    await page.getByRole("tab", { name: /actividad/i }).click();
+  }
+  await page.waitForTimeout(1500);
+  if (opts.scrollAdjuntos) {
+    const h = page.getByRole("heading", { name: /archivos adjuntos/i });
+    if (await h.count()) {
+      await h.first().scrollIntoViewIfNeeded();
+      await page.waitForTimeout(2000);
+    }
+  } else if (opts.scrollChat) {
+    const chat = page.locator(".issue-modal-chat-thread");
+    if (await chat.count()) {
+      await chat.first().evaluate((el) => {
+        el.scrollTop = 0;
+      });
+      await page.waitForTimeout(800);
+    }
+  }
+  const path = resolve(OUT, fileName);
+  await dialog.screenshot({ path });
+  console.log("OK", fileName);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(600);
+}
+
 async function shot(page, name, url, opts = {}) {
   if (url) {
     await page.goto(url, { waitUntil: "networkidle" });
@@ -149,6 +237,13 @@ async function main() {
   await page.waitForTimeout(1500);
   await shot(page, "11-portal-mis-solicitudes.png", null);
 
+  const solicitudNomina = page.getByText(/portal de nómina|nómina/i).first();
+  if (await solicitudNomina.count()) {
+    await solicitudNomina.click();
+    await page.waitForTimeout(3500);
+    await shot(page, "11b-portal-seguimiento-chat.png", null);
+  }
+
   const nuevaBtn = page.getByRole("button", { name: /nueva solicitud/i });
   await nuevaBtn.first().click();
   await page.waitForTimeout(1500);
@@ -157,7 +252,16 @@ async function main() {
   await context.clearCookies();
   await page.goto(`${BASE}/login`, { waitUntil: "networkidle" });
   await login(page, USERS.agente);
-  await shot(page, "07-workspace-kanban.png", `${BASE}/workspace`);
+  await shot(page, "07-workspace-kanban.png", `${BASE}/workspace`, { wait: 2500 });
+  await clickTab(page, "lista");
+  await page.waitForTimeout(1500);
+  await shot(page, "07b-workspace-lista.png", null);
+  await capturarDetalleIncidencia(page, /No puedo acceder al VPN/i, "17-incidencia-chat-comentarios.png", {
+    scrollChat: true,
+  });
+  await capturarDetalleIncidencia(page, /No puedo acceder al VPN/i, "18-incidencia-adjuntos-chat.png", {
+    scrollAdjuntos: true,
+  });
   await capturarVistasPlanificacion(page);
 
   await context.clearCookies();

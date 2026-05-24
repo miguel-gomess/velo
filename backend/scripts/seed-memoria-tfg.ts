@@ -7,15 +7,10 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { generarPngDemo, varianteDesdeTipo } from "./lib/demo-png";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEMO_PASSWORD = process.env.VELO_DEMO_PASS ?? "DemoVelo2025!";
-
-/** PNG pequeños para adjuntos de demostración en comentarios. */
-const DEMO_PNG = {
-  captura: readFileSync(resolve(__dirname, "../../frontend/public/favicon-32.png")),
-  evidencia: readFileSync(resolve(__dirname, "../../frontend/public/icon-192.png")),
-} as const;
 
 function loadEnv() {
   const envPath = resolve(dirname(fileURLToPath(import.meta.url)), "../.env");
@@ -54,8 +49,14 @@ async function insertarMensajesDemo(
   for (const msg of mensajes) {
     let imagenRuta: string | null = null;
     if (msg.imagen) {
-      const buffer = DEMO_PNG[msg.imagen];
-      const file = new File([buffer], `demo-${incidenciaId}-${seq++}.png`, { type: "image/png" });
+      const seqActual = seq++;
+      const variant = varianteDesdeTipo(msg.imagen, incidenciaId, seqActual, msg.contenido);
+      const buffer = generarPngDemo(variant, msg.contenido, incidenciaId + seqActual);
+      const file = new File(
+        [buffer],
+        `demo-${incidenciaId}-${seqActual}-${variant}.png`,
+        { type: "image/png" },
+      );
       const guardada = await guardarImagenIncidencia(incidenciaId, file);
       imagenRuta = guardada.ruta;
     }

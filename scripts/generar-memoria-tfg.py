@@ -27,6 +27,8 @@ from memoria_contenido import (
     DESARROLLO_PORTAL,
     DESARROLLO_PRUEBAS,
     DESARROLLO_SEGURIDAD,
+    DESARROLLO_LISTA,
+    DESARROLLO_PORTAL_SEGUIMIENTO,
     DESARROLLO_TABLERO,
     DESARROLLO_TECNOLOGIAS,
     INTRODUCCION,
@@ -230,10 +232,14 @@ def setup_images() -> dict[str, Path]:
     ui_captures = {
         "portal": "06-portal-inicio.png",
         "kanban": "07-workspace-kanban.png",
+        "lista": "07b-workspace-lista.png",
+        "detalle_chat": "17-incidencia-chat-comentarios.png",
+        "detalle_adjuntos": "18-incidencia-adjuntos-chat.png",
         "dashboard": "08-dashboard-admin.png",
         "config": "09-configuracion-equipos.png",
         "login": "10-login.png",
         "portal_mis": "11-portal-mis-solicitudes.png",
+        "portal_seguimiento": "11b-portal-seguimiento-chat.png",
         "portal_nueva": "12-portal-nueva-solicitud.png",
         "analisis": "13-dashboard-analisis.png",
         "roadmap": "14-roadmap-epicas.png",
@@ -436,38 +442,60 @@ def build_document(images: dict[str, Path]) -> None:
 
     add_heading(doc, "7.3 Portal del empleado", 2)
     add_paras(doc, DESARROLLO_PORTAL)
+    add_paras(doc, DESARROLLO_PORTAL_SEGUIMIENTO)
     if images.get("login"):
         add_figure(doc, images["login"], "Figura 3. Pantalla de acceso con correo y contraseña.")
     add_figure(doc, images["portal"], "Figura 4. Página de inicio del portal.")
     if images.get("portal_mis"):
         add_figure(doc, images["portal_mis"], "Figura 5. Listado de mis solicitudes.")
+    if images.get("portal_seguimiento"):
+        add_figure(
+            doc,
+            images["portal_seguimiento"],
+            "Figura 5b. Seguimiento de una solicitud con mensajes en el portal.",
+        )
     if images.get("portal_nueva"):
         add_figure(doc, images["portal_nueva"], "Figura 6. Alta de una nueva solicitud.")
 
     add_heading(doc, "7.4 Tablero de trabajo del equipo", 2)
     add_paras(doc, DESARROLLO_TABLERO)
     add_figure(doc, images["kanban"], "Figura 7. Tablero con columnas de estado.")
+    if images.get("lista"):
+        add_figure(doc, images["lista"], "Figura 7b. Vista lista con paginación.")
+    add_paras(doc, DESARROLLO_LISTA)
+    if images.get("detalle_chat"):
+        add_figure(
+            doc,
+            images["detalle_chat"],
+            "Figura 8. Detalle de incidencia: hilo de comentarios con imágenes e internos.",
+        )
+    if images.get("detalle_adjuntos"):
+        add_figure(
+            doc,
+            images["detalle_adjuntos"],
+            "Figura 9. Archivos adjuntos y descripción en el detalle de la incidencia.",
+        )
 
     add_heading(doc, "7.5 Planificación por épicas", 2)
     add_paras(doc, DESARROLLO_PLANIFICACION)
     add_paras(doc, DESARROLLO_FLUJO)
     if images.get("roadmap"):
-        add_figure(doc, images["roadmap"], "Figura 11. Roadmap con avance y SLA por épica.")
+        add_figure(doc, images["roadmap"], "Figura 13. Roadmap con avance y SLA por épica.")
     if images.get("cronograma"):
-        add_figure(doc, images["cronograma"], "Figura 12. Cronograma tipo Gantt con agrupación por épica.")
+        add_figure(doc, images["cronograma"], "Figura 14. Cronograma tipo Gantt con agrupación por épica.")
     if images.get("calendario"):
-        add_figure(doc, images["calendario"], "Figura 13. Calendario de fechas límite con código de colores SLA.")
+        add_figure(doc, images["calendario"], "Figura 15. Calendario de fechas límite con código de colores SLA.")
 
     add_heading(doc, "7.6 Panel de administración", 2)
     add_paras(doc, DESARROLLO_ADMIN)
-    add_figure(doc, images["dashboard"], "Figura 8. Vista global de incidencias.")
+    add_figure(doc, images["dashboard"], "Figura 10. Vista global de incidencias.")
     if images.get("analisis"):
         add_figure(
             doc,
             images["analisis"],
-            "Figura 9. Resumen de tiempos, plazos y SLA desglosado por épica.",
+            "Figura 11. Resumen de tiempos, plazos y SLA desglosado por épica.",
         )
-    add_figure(doc, images["config"], "Figura 10. Configuración de equipos, plazos y épicas.")
+    add_figure(doc, images["config"], "Figura 12. Configuración de equipos, plazos y épicas.")
 
     add_heading(doc, "7.7 Seguridad y protección de datos", 2)
     add_paras(doc, DESARROLLO_SEGURIDAD)
@@ -523,8 +551,12 @@ def build_document(images: dict[str, Path]) -> None:
         ("login", "Acceso al sistema."),
         ("portal", "Portal — inicio."),
         ("portal_mis", "Portal — mis solicitudes."),
+        ("portal_seguimiento", "Portal — seguimiento con mensajes."),
         ("portal_nueva", "Portal — nueva solicitud."),
         ("kanban", "Tablero del equipo."),
+        ("lista", "Vista lista del workspace."),
+        ("detalle_chat", "Detalle — comentarios con imágenes."),
+        ("detalle_adjuntos", "Detalle — archivos adjuntos."),
         ("roadmap", "Roadmap por épica."),
         ("cronograma", "Cronograma Gantt."),
         ("calendario", "Calendario de plazos."),
